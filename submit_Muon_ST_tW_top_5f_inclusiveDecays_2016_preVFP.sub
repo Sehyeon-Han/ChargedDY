@@ -1,0 +1,15 @@
+universe = vanilla 
+executable = run_Muon_ST_tW_top_5f_inclusiveDecays_2016_preVFP.sh 
+
+arguments = $(filename) $(Process) 
+
+should_transfer_files = YES 
+when_to_transfer_output = ON_EXIT 
+
+transfer_input_files = Muon_ST_tW_top_5f_inclusiveDecays_2016_preVFP.cc, eff_mu_ID.root, eff_mu_ISO.root, eff_mu_STRIG.root, PUreweight.root
+
+output = logs/job_$(Cluster)_$(Process).out
+error = logs/job_$(Cluster)_$(Process).err 
+log = logs/job_$(Cluster)_$(Process).log 
+
+queue filename from input_ST_tW_top_5f_inclusiveDecays_2016_preVFP.txt

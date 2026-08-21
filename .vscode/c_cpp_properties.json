@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.32.02-51ebb/x86_64-el9-gcc13-opt/include"
+            ],
+            "defines": [],
+            "compilerPath": "/cvmfs/sft.cern.ch/lcg/releases/gcc/13.1.0-b3d18/x86_64-el9/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}

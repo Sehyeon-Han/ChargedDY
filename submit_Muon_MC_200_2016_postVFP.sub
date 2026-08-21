@@ -1,0 +1,15 @@
+universe = vanilla 
+executable = run_Muon_MC_200_2016_postVFP.sh 
+
+arguments = $(filename) $(Process) 
+
+should_transfer_files = YES 
+when_to_transfer_output = ON_EXIT 
+
+transfer_input_files = Muon_MC_200_2016_postVFP.cc 
+
+output = logs/job_$(Cluster)_$(Process).out
+error = logs/job_$(Cluster)_$(Process).err 
+log = logs/job_$(Cluster)_$(Process).log 
+
+queue filename from input_WToMuNu_M-200_2016_postVFP.txt

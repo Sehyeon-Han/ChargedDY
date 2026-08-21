@@ -1,0 +1,22 @@
+universe = vanilla
+
+executable = run_Muon_fake_rate_dependence.sh
+
+arguments = $(inputfile) fake_mu_merged_dependence_$(Cluster)_$(Process).root
+
+output = logs/fake_dependence_data_$(Cluster)_$(Process).out
+error  = logs/fake_dependence_data_$(Cluster)_$(Process).err
+log    = logs/fake_dependence_data_$(Cluster)_$(Process).log
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_executable = YES
+
+transfer_input_files = Muon_fake_rate_dependence.cc
+transfer_output_files = fake_mu_merged_dependence_$(Cluster)_$(Process).root
+
+request_cpus = 1
+request_memory = 2000MB
+request_disk = 2000MB
+
+queue inputfile from input_SingleMuon_2016_preVFP.txt

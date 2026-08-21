@@ -1,0 +1,154 @@
+universe = vanilla
+
+executable = run_Muon_fake_rate_dependence_MC.sh
+
+arguments = \
+    $(sample) \
+    $(inputfile) \
+    $(outputfile)
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_executable = YES
+
+transfer_input_files = Muon_fake_rate_dependence_MC.cc, eff_mu_ID.root, eff_mu_ISO.root, eff_mu_STRIG.root, PUreweight.root
+
+transfer_output_files = $(outputfile)
+
+output = logs/fake_dependence_$(sample)_$(Cluster)_$(Process).out
+error  = logs/fake_dependence_$(sample)_$(Cluster)_$(Process).err
+log    = logs/fake_dependence_$(sample)_$(Cluster)_$(Process).log
+
+request_cpus = 1
+request_memory = 2500MB
+request_disk = 2GB
+
+
+# ==================================================
+# W -> mu nu
+# ==================================================
+
+sample = WToMuNu_M200
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToMuNu_M-200_2016_preVFP.txt
+
+
+sample = WToMuNu_M500
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToMuNu_M-500_2016_preVFP.txt
+
+
+sample = WToMuNu_M1000
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToMuNu_M-1000_2016_preVFP.txt
+
+
+sample = WToMuNu_M2000
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToMuNu_M-2000_2016_preVFP.txt
+
+
+# ==================================================
+# W -> tau nu
+# ==================================================
+
+sample = WToTauNu_M200
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToTauNu_M-200_2016_preVFP.txt
+
+
+sample = WToTauNu_M500
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToTauNu_M-500_2016_preVFP.txt
+
+
+sample = WToTauNu_M1000
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToTauNu_M-1000_2016_preVFP.txt
+
+
+sample = WToTauNu_M2000
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WToTauNu_M-2000_2016_preVFP.txt
+
+
+# ==================================================
+# ttbar: no mT interval
+# ==================================================
+
+sample = TTTo2L2Nu
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_TTTo2L2Nu_2016_preVFP.txt
+
+
+sample = TTToSemiLeptonic
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_TTToSemiLeptonic_2016_preVFP.txt
+
+
+# ==================================================
+# Single top: no mT interval
+# ==================================================
+
+sample = ST_s_channel
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_ST_s-channel_4f_leptonDecays_2016_preVFP.txt
+
+
+sample = ST_t_antitop
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_ST_t-channel_anitop_4f_InclusiveDecays_2016_preVFP.txt
+
+
+sample = ST_t_top
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_ST_t-channel_top_4f_InclusiveDecays_2016_preVFP.txt
+
+
+sample = ST_tW_antitop
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_ST_tW_antitop_5f_inclusiveDecays_2016_preVFP.txt
+
+
+sample = ST_tW_top
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_ST_tW_top_5f_inclusiveDecays_2016_preVFP.txt
+
+
+# ==================================================
+# Diboson: no mT interval
+# ==================================================
+
+sample = WWTo1L1Nu2Q
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WWTo1L1Nu2Q_2016_preVFP.txt
+
+
+sample = WWTo2L2Nu
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WWTo2L2Nu_2016_preVFP.txt
+
+
+sample = WWTo4Q
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WWTo4Q_4f_2016_preVFP.txt
+
+sample = WZTo1L1Nu2Q_4f
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WZTo1L1Nu2Q_4f_2016_preVFP.txt
+
+sample = WZTo1L3Nu_4f
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WZTo1L3Nu_4f_2016_preVFP.txt
+
+sample = WZTo2Q2Nu_4f
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WZTo2Q2Nu_4f_2016_preVFP.txt
+
+sample = WZTo3LNu
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_WZTo3LNu_2016_preVFP.txt
+
+sample = ZZ
+outputfile = fake_mu_merged_$(sample)_dependence_$(Cluster)_$(Process).root
+queue inputfile from input_ZZ_2016_preVFP.txt

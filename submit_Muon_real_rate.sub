@@ -1,0 +1,21 @@
+universe = vanilla
+
+executable = run_Muon_real_rate.sh
+
+arguments = $(inputfile) real_mu_$(Cluster)_$(Process).root
+
+output = logs/real_rate_$(Cluster)_$(Process).out
+error  = logs/real_rate_$(Cluster)_$(Process).err
+log    = logs/real_rate_$(Cluster)_$(Process).log
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_executable = YES
+
+transfer_input_files = Muon_real_rate.cc, eff_mu_ID.root, eff_mu_ISO.root, eff_mu_STRIG.root, PUreweight.root
+
+request_cpus = 1
+request_memory = 2000MB
+request_disk = 2000MB
+
+queue inputfile from input_DYJetsToMuMu_M-50_2016_preVFP.txt
