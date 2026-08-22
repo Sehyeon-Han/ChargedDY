@@ -12,20 +12,36 @@
 #include <algorithm>
 #include <TStopwatch.h>
 #include <TStyle.h>
+#include <TString.h>
 
 void Muon_fake_rate_dependence(const char* inFile,
                                const char* outFile)
 {
     gStyle->SetOptStat(0);
 
+    double ptBins[] = {65, 100, 150, 200, 300, 1500};
+    const int N_ptBins = 5;
+
+    double etaBins[] = {0.0, 0.9, 1.2, 2.1, 2.4};
+    const int N_etaBins = 4;
+
     double metBins[] = {0.0, 20.0, 40.0, 65.0};
     const int N_metBins = 3;
 
-    TH1D *h_fake_den_MET = new TH1D("h_fake_den_MET", "Fake-rate denominator;MET [GeV];Events", N_metBins, metBins);
-    TH1D *h_fake_num_MET = new TH1D("h_fake_num_MET", "Fake-rate numerator;MET [GeV];Events", N_metBins, metBins);
+    TH1D* h_fake_den_MET[N_ptBins][N_etaBins];
+    TH1D* h_fake_num_MET[N_ptBins][N_etaBins];
 
-    h_fake_den_MET->Sumw2();
-    h_fake_num_MET->Sumw2();
+    for(int i = 0; i < N_ptBins; ++i)
+    {
+        for(int j = 0; j < N_etaBins; ++j)
+        {
+            h_fake_den_MET[i][j] = new TH1D(Form("h_fake_den_MET_pt%d_eta%d", i + 1, j + 1), Form("Fake-rate denominator;MET [GeV];Events"), N_metBins, metBins);
+            h_fake_num_MET[i][j] = new TH1D(Form("h_fake_num_MET_pt%d_eta%d", i + 1, j + 1), Form("Fake-rate numerator;MET [GeV];Events"), N_metBins, metBins);
+
+            h_fake_den_MET[i][j]->Sumw2();
+            h_fake_num_MET[i][j]->Sumw2();
+        }
+    }
 
     TChain chain("Events");
     chain.Add(inFile);
@@ -50,9 +66,6 @@ void Muon_fake_rate_dependence(const char* inFile,
 
     TTreeReaderValue<Float_t> MET_pt(reader, "MET_pt");
     TTreeReaderValue<Float_t> MET_phi(reader, "MET_phi");
-
-    double N_den = 0.0;
-    double N_num = 0.0;
 
     while(reader.Next())
     {
@@ -99,8 +112,35 @@ void Muon_fake_rate_dependence(const char* inFile,
         double abseta = std::fabs(eta);
         double phi = Muon_phi[i];
 
-        if(pt < 65.0 || pt >= 100.0) continue;
-        if(abseta >= 0.9) continue;
+        int ptBin = -1;
+        int etaBin = -1;
+
+        for(int j = 0; j < N_ptBins; ++j)
+        {
+            if(j == N_ptBins - 1)
+            {
+                if(pt >= ptBins[j]) ptBin = j;
+            }
+            else
+            {
+                if(pt >= ptBins[j] && pt < ptBins[j + 1])
+                {
+                    ptBin = j;
+                    break;
+                }
+            }
+        }
+
+        for(int j = 0; j < N_etaBins; ++j)
+        {
+            if(abseta >= etaBins[j] && abseta < etaBins[j + 1])
+            {
+                etaBin = j;
+                break;
+            }
+        }
+
+        if(ptBin < 0 || etaBin < 0) continue;
 
         double dphiMuonMET = std::fabs(TVector2::Phi_mpi_pi(phi - *MET_phi));
 
@@ -130,22 +170,27 @@ void Muon_fake_rate_dependence(const char* inFile,
 
         if(!hasBackToBackJet) continue;
 
-        h_fake_den_MET->Fill(*MET_pt);
-        N_den += 1.0;
+        h_fake_den_MET[ptBin][etaBin]->Fill(*MET_pt);
+
 
         bool passTight = Muon_highPtId[i] == 2 && Muon_tkRelIso[i] < 0.10;
 
         if(passTight)
         {
-            h_fake_num_MET->Fill(*MET_pt);
-            N_num += 1.0;
+            h_fake_num_MET[ptBin][etaBin]->Fill(*MET_pt);
         }
     }
 
     TFile *fout = TFile::Open(outFile, "RECREATE");
 
-    h_fake_den_MET->Write();
-    h_fake_num_MET->Write();
+    for(int i = 0; i < N_ptBins; ++i)
+    {
+        for(int j = 0; j < N_etaBins; ++j)
+        {
+            h_fake_den_MET[i][j]->Write();
+            h_fake_num_MET[i][j]->Write();
+        }
+    }
 
     fout->Close();
 
