@@ -1,0 +1,14 @@
+{
+  "output": "fake_mu_ZZ_merged.root",
+  "inputs": [
+    "Muon_fake_rate_ZZ_9652946_640.root",
+    "Muon_fake_rate_ZZ_9652946_641.root",
+    "Muon_fake_rate_ZZ_9652946_642.root",
+    "Muon_fake_rate_ZZ_9652946_643.root",
+    "Muon_fake_rate_ZZ_9652946_644.root",
+    "Muon_fake_rate_ZZ_9652946_645.root",
+    "Muon_fake_rate_ZZ_9652946_646.root",
+    "Muon_fake_rate_ZZ_9652946_647.root"
+  ],
+  "verified": true
+}

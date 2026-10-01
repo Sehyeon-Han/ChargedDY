@@ -13,7 +13,8 @@ transfer_executable = YES
 transfer_input_files = \
     Muon_QCD_CR_2016_preVFP.cc, \
     real_mu_rate.root, \
-    fake_mu_normalized_results.root
+    fake_mu_normalized_results.root, \
+    fake_rate_3D.root
 
 transfer_output_files = $(outputfile)
 

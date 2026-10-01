@@ -17,7 +17,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
 {
     TH1::SetDefaultSumw2();
 
-    double mTBins[] = {200, 250, 300, 350, 400, 500, 600, 700, 800, 1000, 1500, 2000, 3500};
+    double mTBins[] = {200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
     int nmTBins = sizeof(mTBins) / sizeof(double) - 1;
 
     TH1D *h_Muon_pt = new TH1D("h_Muon_pt", "QCD;Muon p_{T} [GeV];Events", 30, 65, 1500);
@@ -98,6 +98,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<Float_t> Muon_iso(reader, "Muon_tkRelIso");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_looseId(reader, "Muon_looseId");
 
     TTreeReaderValue<Bool_t> HLT_Mu50(reader, "HLT_Mu50");
     TTreeReaderValue<Bool_t> HLT_TkMu50(reader, "HLT_TkMu50");
@@ -138,8 +139,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
             bool passLoose =
                 Muon_pt[i] > 65.0 &&
                 std::fabs(Muon_eta[i]) < 2.4 &&
-                Muon_highPtId[i] == 2 &&
-                Muon_iso[i] < 0.40;
+                Muon_highPtId[i] == 2;
 
             if(passLoose)
             {
@@ -156,7 +156,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
         {
             if(i == looseIdx) continue;
 
-            if(Muon_pt[i] > 20.0)
+            if(Muon_pt[i] > 20.0 && Muon_looseId[i] && std::fabs(Muon_eta[i]) < 2.4)
             {
                 extraMuon = true;
                 break;
@@ -173,7 +173,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
         double muonIso = Muon_iso[looseIdx];
 
         bool passTight = muonIso < 0.10;
-        bool passLooseNotTight = muonIso >= 0.10 && muonIso < 0.40;
+        bool passLooseNotTight = muonIso >= 0.10;
 
         if(!passTight && !passLooseNotTight) continue;
 
@@ -219,7 +219,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
             looseWeightSum += weight;
         }
 
-        if(mT >= 1000.0)
+        if(mT >= 2000.0)
         {
             if(passTight)
             {
@@ -253,6 +253,27 @@ void Muon_QCD_2016_preVFP(const char* inFile,
         fFake->Close();
         return;
     }
+
+    auto SetNegativeBinsToZero = [](TH1D* hist)
+    {
+        if(!hist) return;
+
+        for(int i = 1; i <= hist->GetNbinsX(); ++i)
+        {
+            if(hist->GetBinContent(i) < 0.0)
+            {
+                hist->SetBinContent(i, 0.0);
+                hist->SetBinError(i, 0.0);
+            }
+        }
+    };
+
+    SetNegativeBinsToZero(h_Muon_pt);
+    SetNegativeBinsToZero(h_Muon_eta);
+    SetNegativeBinsToZero(h_Muon_phi);
+    SetNegativeBinsToZero(h_MET_pt);
+    SetNegativeBinsToZero(h_MET_phi);
+    SetNegativeBinsToZero(h_mT);
 
     h_Muon_pt->Write();
     h_Muon_eta->Write();

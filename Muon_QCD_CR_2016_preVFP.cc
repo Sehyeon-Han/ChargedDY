@@ -9,43 +9,64 @@
 #include <cmath>
 #include <algorithm>
 #include <TVector2.h>
+#include <TH3D.h>
 
 void Muon_QCD_CR_2016_preVFP(const char* inFile,
                              const char* outFile,
-                             const char* realRateFile = "real_mu_rate.root",
-                             const char* fakeRateFile = "fake_mu_normalized_results.root")
+                             const char* RealRateFile = "real_mu_rate.root",
+                             const char* FakeRateFile = "fake_mu_normalized_results.root")
 {
     TH1::SetDefaultSumw2();
-
-    double ptBins[] = {65, 100, 150, 200, 300, 1500};
-    const int N_ptBins = 5;
 
     TH1D *h_Muon_pt_CR = new TH1D("h_Muon_pt", "QCD;Muon p_{T} [GeV];Events", 30, 65, 1500);
     TH1D *h_Muon_eta_CR = new TH1D("h_Muon_eta", "QCD;Muon #eta;Events", 50, -3, 3);
     TH1D *h_Muon_phi_CR = new TH1D("h_Muon_phi", "QCD;Muon #phi;Events", 50, -3.5, 3.5);
-    TH1D *h_MET_pt_CR = new TH1D("h_MET_pt", "QCD;MET p_{T} [GeV];Events", 40, 0, 500);
+    TH1D *h_MET_pt_CR = new TH1D("h_MET_pt", "QCD;MET p_{T} [GeV];Events", 65, 0, 65);
     TH1D *h_MET_phi_CR = new TH1D("h_MET_phi", "QCD;MET #phi;Events", 50, -3.5, 3.5);
 
-    TFile *fReal = TFile::Open(realRateFile, "READ");
-    TFile *fFake = TFile::Open(fakeRateFile, "READ");
+    TFile *fReal = TFile::Open(RealRateFile, "READ");
+    TFile *fFake = TFile::Open(FakeRateFile, "READ");
 
     TH2D *h_real_rate = dynamic_cast<TH2D*>(fReal->Get("h_real_rate"));
     TH2D *h_fake_rate = dynamic_cast<TH2D*>(fFake->Get("h_fake_rate"));
 
-    auto GetRate = [](TH2D *hist, double absEta, double pt)
+    auto GetRealRate = [](TH2D *hist, double pt, double absEta)
     {
-        double etaValue = std::clamp(absEta,
+        double etaValue = std::clamp(
+            absEta,
+            hist->GetXaxis()->GetXmin() + 1.0e-6,
+            hist->GetXaxis()->GetXmax() - 1.0e-6
+        );
+
+        double ptValue = std::clamp(
+            pt,
+            hist->GetYaxis()->GetXmin() + 1.0e-6,
+            hist->GetYaxis()->GetXmax() - 1.0e-6
+        );
+
+        int etaBin =
+            hist->GetXaxis()->FindFixBin(etaValue);
+
+        int ptBin =
+            hist->GetYaxis()->FindFixBin(ptValue);
+
+        return hist->GetBinContent(ptBin, etaBin);
+    };
+
+    auto GetFakeRate = [](TH2D *hist, double pt, double absEta)
+    {
+        double ptValue = std::clamp(pt,
                                      hist->GetXaxis()->GetXmin() + 1.0e-6,
                                      hist->GetXaxis()->GetXmax() - 1.0e-6);
 
-        double ptValue = std::clamp(pt,
+        double etaValue = std::clamp(absEta,
                                     hist->GetYaxis()->GetXmin() + 1.0e-6,
                                     hist->GetYaxis()->GetXmax() - 1.0e-6);
 
-        int etaBin = hist->GetXaxis()->FindFixBin(etaValue);
-        int ptBin = hist->GetYaxis()->FindFixBin(ptValue);
+        int ptBin = hist->GetXaxis()->FindFixBin(ptValue);
+        int etaBin = hist->GetYaxis()->FindFixBin(etaValue);
 
-        return hist->GetBinContent(etaBin, ptBin);
+        return hist->GetBinContent(ptBin, etaBin);
     };
 
     TChain chain("Events");
@@ -57,6 +78,7 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
     TTreeReaderArray<Float_t> Muon_eta(reader, "Muon_eta");
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_looseId(reader, "Muon_looseId");
     TTreeReaderArray<Float_t> Muon_tkRelIso(reader, "Muon_tkRelIso");
     TTreeReaderValue<Bool_t> HLT_TkMu50(reader, "HLT_TkMu50");
     TTreeReaderValue<Bool_t> HLT_Mu50(reader, "HLT_Mu50");
@@ -74,9 +96,11 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
 
     double tightWeightSum = 0.0;
     double looseWeightSum = 0.0;
+    
     while(reader.Next())
     {
         if(!(*HLT_Mu50 || *HLT_TkMu50)) continue;
+
         if(*MET_pt >= 65.0) continue;
 
         int looseCount = 0;
@@ -86,7 +110,7 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
 
         for(int i = 0; i < nMuon; ++i)
         {
-            bool passLoose = Muon_pt[i] > 65.0 && std::fabs(Muon_eta[i]) < 2.4 && Muon_highPtId[i] == 2 && Muon_tkRelIso[i] < 0.40;
+            bool passLoose = Muon_pt[i] > 65.0 && std::fabs(Muon_eta[i]) < 2.4 && Muon_highPtId[i] == 2;
 
             if(passLoose)
             {
@@ -103,7 +127,7 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
         {
             if(i == looseIdx) continue;
 
-            if(Muon_pt[i] > 20.0)
+            if(Muon_pt[i] > 20.0 && Muon_looseId[i] && std::fabs(Muon_eta[i]) < 2.4)
             {
                 extraMuon = true;
                 break;
@@ -153,12 +177,12 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
         double muonIso = Muon_tkRelIso[looseIdx];
 
         bool passTight = muonIso < 0.10;
-        bool passLooseNotTight = muonIso >= 0.10 && muonIso < 0.40;
+        bool passLooseNotTight = muonIso >= 0.10;
 
         if(!passTight && !passLooseNotTight) continue;
 
-        double epsilonR = GetRate(h_real_rate, std::fabs(muonEta), muonPt);
-        double epsilonF = GetRate(h_fake_rate, std::fabs(muonEta), muonPt);
+        double epsilonR = GetRealRate(h_real_rate, muonPt, std::fabs(muonEta));
+        double epsilonF = GetFakeRate(h_fake_rate, muonPt, std::fabs(muonEta));
 
         double denominator = epsilonR - epsilonF;
 
@@ -184,14 +208,17 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
             looseWeightSum += weight;
         }
 
+        h_MET_pt_CR->Fill(*MET_pt, weight);
+        
+        //if(*MET_pt >= 65.0) continue;
+
         h_Muon_pt_CR->Fill(muonPt, weight);
         h_Muon_eta_CR->Fill(muonEta, weight);
         h_Muon_phi_CR->Fill(muonPhi, weight);
-        h_MET_pt_CR->Fill(*MET_pt, weight);
         h_MET_phi_CR->Fill(*MET_phi, weight);
     }
 
-     TFile *fOut = TFile::Open(outFile, "RECREATE");
+    TFile *fOut = TFile::Open(outFile, "RECREATE");
 
     h_Muon_pt_CR->Write();
     h_Muon_eta_CR->Write();

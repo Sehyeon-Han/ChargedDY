@@ -29,14 +29,14 @@ void Muon_fake_rate(const char* inFile,
 
     TH1D *h_Muon_pt_den = new TH1D("h_Muon_pt_den", "Muon p_{T}; p_{T} [GeV]; Events", 30, 65, 1500);
     TH1D *h_Muon_eta_den = new TH1D("h_Muon_eta_den", "Muon #eta; #eta; Events", 50, -3, 3);
-    TH1D *h_MET_pt_den = new TH1D("h_MET_pt_den", "MET p_{T}; MET p_{T} [GeV]; Events", 40, 0, 500);
+    TH1D *h_MET_pt_den = new TH1D("h_MET_pt_den", "MET p_{T}; MET p_{T} [GeV]; Events", 65, 0, 65);
     TH1D *h_Muon_phi_den = new TH1D("h_Muon_phi_den", "Muon #phi; #phi; Events", 50, -3.5, 3.5);
     TH1D *h_MET_phi_den = new TH1D("h_MET_phi_den", "MET #phi; MET #phi; Events", 50, -3.5, 3.5);
     TH1D *h_Muon_tkRelIso_den = new TH1D("h_Muon_tkRelIso_den", "Muon tkRelIso; iso; Events", 30, 0, 0.45);
 
     TH1D *h_Muon_pt_num = new TH1D("h_Muon_pt_num", "Muon p_{T}; p_{T} [GeV]; Events", 30, 65, 1500);
     TH1D *h_Muon_eta_num = new TH1D("h_Muon_eta_num", "Muon #eta; #eta; Events", 50, -3, 3);
-    TH1D *h_MET_pt_num = new TH1D("h_MET_pt_num", "MET p_{T}; MET p_{T} [GeV]; Events", 40, 0, 500);
+    TH1D *h_MET_pt_num = new TH1D("h_MET_pt_num", "MET p_{T}; MET p_{T} [GeV]; Events", 65, 0, 65);
     TH1D *h_Muon_phi_num = new TH1D("h_Muon_phi_num", "Muon #phi; #phi; Events", 50, -3.5, 3.5);
     TH1D *h_MET_phi_num = new TH1D("h_MET_phi_num", "MET #phi; MET #phi; Events", 50, -3.5, 3.5);
     TH1D *h_Muon_tkRelIso_num = new TH1D("h_Muon_tkRelIso_num", "Muon tkRelIso; iso; Events", 30, 0, 0.45);
@@ -50,6 +50,7 @@ void Muon_fake_rate(const char* inFile,
     TTreeReaderArray<Float_t> Muon_eta(reader, "Muon_eta");
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_looseId(reader, "Muon_looseId");
     TTreeReaderArray<Float_t> Muon_tkRelIso(reader, "Muon_tkRelIso");
     TTreeReaderValue<Bool_t> HLT_TkMu50(reader, "HLT_TkMu50");
     TTreeReaderValue<Bool_t> HLT_Mu50(reader, "HLT_Mu50");
@@ -77,7 +78,7 @@ void Muon_fake_rate(const char* inFile,
 
         for(int i = 0; i < nMuon; ++i)
         {
-            bool passLoose = Muon_pt[i] > 65.0 && std::fabs(Muon_eta[i]) < 2.4 && Muon_highPtId[i] == 2 && Muon_tkRelIso[i] < 0.40;
+            bool passLoose = Muon_pt[i] > 65.0 && std::fabs(Muon_eta[i]) < 2.4 && Muon_highPtId[i] == 2;
 
             if(passLoose)
             {
@@ -94,7 +95,7 @@ void Muon_fake_rate(const char* inFile,
         {
             if(i == looseIdx) continue;
 
-            if(Muon_pt[i] > 20.0)
+            if(Muon_pt[i] > 20.0 && Muon_looseId[i] && std::fabs(Muon_eta[i]) < 2.4)
             {
                 extraMuon = true;
                 break;
@@ -142,6 +143,28 @@ void Muon_fake_rate(const char* inFile,
 
         double ratePt = std::min(pt, ptBins[N_ptBins] - 1.0e-6);
 
+        h_MET_pt_den->Fill(*MET_pt);
+
+        if(passTight)
+        {
+            h_MET_pt_num->Fill(*MET_pt);
+        }
+
+        h_Muon_pt_den->Fill(ratePt);
+        h_Muon_eta_den->Fill(eta);
+        h_Muon_phi_den->Fill(phi);
+        h_Muon_tkRelIso_den->Fill(Muon_tkRelIso[i]);
+        h_MET_phi_den->Fill(*MET_phi);
+
+        if(passTight)
+        {
+            h_Muon_pt_num->Fill(ratePt);
+            h_Muon_eta_num->Fill(eta);
+            h_Muon_phi_num->Fill(phi);
+            h_Muon_tkRelIso_num->Fill(Muon_tkRelIso[i]);
+            h_MET_phi_num->Fill(*MET_phi);
+        }
+
         h_fake_den->Fill(abseta, ratePt);
         N_looseInclusive += 1.0;
 
@@ -149,21 +172,7 @@ void Muon_fake_rate(const char* inFile,
         {
             h_fake_num->Fill(abseta, ratePt);
             N_tight += 1.0;
-
-            h_Muon_pt_num->Fill(ratePt);
-            h_Muon_eta_num->Fill(eta);
-            h_Muon_phi_num->Fill(phi);
-            h_MET_pt_num->Fill(*MET_pt);
-            h_MET_phi_num->Fill(*MET_phi);
-            h_Muon_tkRelIso_num->Fill(Muon_tkRelIso[i]);
         }
-        
-        h_Muon_pt_den->Fill(ratePt);
-        h_Muon_eta_den->Fill(eta);
-        h_Muon_phi_den->Fill(phi);
-        h_MET_pt_den->Fill(*MET_pt);
-        h_MET_phi_den->Fill(*MET_phi);
-        h_Muon_tkRelIso_den->Fill(Muon_tkRelIso[i]);
     }
 
     TFile *fout = TFile::Open(outFile, "RECREATE");

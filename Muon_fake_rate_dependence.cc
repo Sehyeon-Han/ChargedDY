@@ -52,6 +52,7 @@ void Muon_fake_rate_dependence(const char* inFile,
     TTreeReaderArray<Float_t> Muon_eta(reader, "Muon_eta");
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_mediumId(reader, "Muon_mediumId");
     TTreeReaderArray<Float_t> Muon_tkRelIso(reader, "Muon_tkRelIso");
     TTreeReaderArray<Float_t> Muon_dxy(reader, "Muon_dxy");
     TTreeReaderArray<Float_t> Muon_dxyErr(reader, "Muon_dxyErr");
@@ -96,7 +97,7 @@ void Muon_fake_rate_dependence(const char* inFile,
         {
             if(i == looseIdx) continue;
 
-            if(Muon_pt[i] > 20.0)
+            if(Muon_pt[i] > 20.0 && Muon_mediumId[i] && std::fabs(Muon_eta[i]) < 2.4)
             {
                 extraMuon = true;
                 break;
@@ -171,7 +172,7 @@ void Muon_fake_rate_dependence(const char* inFile,
         if(!hasBackToBackJet) continue;
 
         h_fake_den_MET[ptBin][etaBin]->Fill(*MET_pt);
-
+        
 
         bool passTight = Muon_highPtId[i] == 2 && Muon_tkRelIso[i] < 0.10;
 

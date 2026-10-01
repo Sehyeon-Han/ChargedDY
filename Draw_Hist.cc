@@ -42,25 +42,6 @@ TH1D* LoadHist(const SampleInfo& s, const char* histName, int idx)
     TH1D* h = (TH1D*)h0->Clone(Form("%s_clone_%d", histName, idx));
     h->SetDirectory(0);
 
-    if(TString(histName) == "h_mT")
-    {
-        int nBins = h->GetNbinsX();
-
-        std::cout << s.fileName
-                  << " | last bin = " << h->GetBinContent(nBins)
-                  << " | overflow = " << h->GetBinContent(nBins + 1)
-                  << std::endl;
-
-        double content = h->GetBinContent(nBins) + h->GetBinContent(nBins + 1);
-        double error = std::sqrt(std::pow(h->GetBinError(nBins), 2) + std::pow(h->GetBinError(nBins + 1), 2));
-
-        h->SetBinContent(nBins, content);
-        h->SetBinError(nBins, error);
-
-        h->SetBinContent(nBins + 1, 0.0);
-        h->SetBinError(nBins + 1, 0.0);
-    }
-
     if(s.label == "QCD")
     {
         std::cout << "\n[QCD] " << histName << std::endl;
@@ -105,13 +86,15 @@ void DrawOneVariable(const std::vector<SampleInfo>& samples,
                      const char* outName,
                      bool useLogx,
                      bool useLogy,
-                     bool drawMassMarks)
+                     bool drawMassMarks,
+                     TFile *fOut)
 {
     std::vector<TH1D*> hists;
     hists.reserve(samples.size());
 
     TH1D* hData = nullptr;
     TH1D* hMCsum = nullptr;
+    TH1D* hBkgSum = nullptr;
 
     THStack* stack = new THStack(Form("stack_%s", histName), Form("%s;%s;Events", canvasTitle, xTitle));
 
@@ -127,6 +110,8 @@ void DrawOneVariable(const std::vector<SampleInfo>& samples,
     {
         TH1D* h = LoadHist(samples[i], histName, i);
         if(!h) continue;
+        fOut->cd();
+        h->Write(Form("%s_sample_%zu", histName, i));
 
         hists.push_back(h);
 
@@ -148,6 +133,19 @@ void DrawOneVariable(const std::vector<SampleInfo>& samples,
             hMCsum->Add(h);
         }
 
+        if(samples[i].label != "W#rightarrow#mu#nu")
+        {
+            if(!hBkgSum)
+            {
+                hBkgSum = (TH1D*)h->Clone(Form("hBkgSum_%s", histName));
+                hBkgSum->SetDirectory(0);
+            }
+            else
+            {
+                hBkgSum->Add(h);
+            }
+        }
+
         if(samples[i].label == "W#rightarrow#mu#nu" && !hLegend_W) hLegend_W = h;
         if(samples[i].label == "Z#rightarrow#mu#mu" && !hLegend_DY) hLegend_DY = h;
         if(samples[i].label == "t#bar{t}" && !hLegend_TT) hLegend_TT = h;
@@ -157,11 +155,21 @@ void DrawOneVariable(const std::vector<SampleInfo>& samples,
         if(samples[i].label == "QCD" && !hLegend_QCD) hLegend_QCD = h;
     }
 
-    if(!hData || !hMCsum)
+    if(!hData || !hMCsum || !hBkgSum)
     {
-        std::cerr << "[ERROR] Missing data or MC sum for " << histName << std::endl;
+        std::cerr << "[ERROR] Missing data, MC sum, or background sum for " << histName << std::endl;
         return;
     }
+
+    TH1D* hSignalData = (TH1D*)hData->Clone(Form("%s_DataMinusBkg", histName));
+    hSignalData->SetDirectory(0);
+    hSignalData->Add(hBkgSum, -1.0);
+
+    fOut->cd();
+    hMCsum->Write(Form("%s_MCsum", histName));
+    hBkgSum->Write(Form("%s_Background", histName));
+    hSignalData->Write(Form("%s_DataMinusBkg", histName));
+    hData->Write(Form("%s_Data", histName));
 
     double ymax = std::max(hData->GetMaximum(), hMCsum->GetMaximum());
 
@@ -548,12 +556,16 @@ void Draw_Hist(const double xsec200 = 8.78288653e00,
         {"Muon_MC_2000_2016_preVFP.root", "W#rightarrow#mu#nu", kGreen+1, kW2000, false}
     };
 
+    TFile *fOut = new TFile("Muon_ChargedDY_mT_2016_preVFP.root", "RECREATE");
+
     CheckMTBinning(samples);
 
-    DrawOneVariable(samples, "h_mT", "m_{T}", "m_{T} [GeV]", "Data_MC_2016_preVFP_mT.png", true, true, true);
-    DrawOneVariable(samples, "h_Muon_pt", "Muon p_{T}", "p_{T} [GeV]", "Data_MC_2016_preVFP_pt.png", true, true, true);
-    DrawOneVariable(samples, "h_Muon_eta", "Muon #eta", "#eta", "Data_MC_2016_preVFP_eta.png", false, false, false);
-    DrawOneVariable(samples, "h_Muon_phi", "Muon #phi", "#phi", "Data_MC_2016_preVFP_phi.png", false, false, false);
-    DrawOneVariable(samples, "h_MET_pt", "MET p_{T}", "MET p_{T}", "Data_MC_2016_preVFP_MET_pt.png", true, true, true);
-    DrawOneVariable(samples, "h_MET_phi", "MET #phi", "#phi", "Data_MC_2016_preVFP_MET_phi.png", false, false, false);
+    DrawOneVariable(samples, "h_mT", "m_{T}", "m_{T} [GeV]", "Data_MC_2016_preVFP_mT.png", true, true, true, fOut);
+    DrawOneVariable(samples, "h_Muon_pt", "Muon p_{T}", "p_{T} [GeV]", "Data_MC_2016_preVFP_pt.png", true, true, true, fOut);
+    DrawOneVariable(samples, "h_Muon_eta", "Muon #eta", "#eta", "Data_MC_2016_preVFP_eta.png", false, false, false, fOut);
+    DrawOneVariable(samples, "h_Muon_phi", "Muon #phi", "#phi", "Data_MC_2016_preVFP_phi.png", false, false, false, fOut);
+    DrawOneVariable(samples, "h_MET_pt", "MET p_{T}", "MET p_{T}", "Data_MC_2016_preVFP_MET_pt.png", true, true, true, fOut);
+    DrawOneVariable(samples, "h_MET_phi", "MET #phi", "#phi", "Data_MC_2016_preVFP_MET_phi.png", false, false, false, fOut);
+
+    fOut->Close();
 }

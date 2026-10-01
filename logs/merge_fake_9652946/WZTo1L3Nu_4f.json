@@ -1,0 +1,17 @@
+{
+  "output": "fake_mu_WZTo1L3Nu_4f_merged.root",
+  "inputs": [
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_550.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_551.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_552.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_553.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_554.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_555.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_556.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_557.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_558.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_559.root",
+    "Muon_fake_rate_WZTo1L3Nu_4f_9652946_560.root"
+  ],
+  "verified": true
+}

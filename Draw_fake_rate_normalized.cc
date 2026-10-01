@@ -992,7 +992,7 @@ void Draw_fake_rate_normalized(const char* dataFile = "fake_mu_merged.root",
                     "fake_CR_stack_Muon_eta_den.png",
                     lumi,
                     false,
-                    false,
+                    true,
                     outputFile);
 
     DrawDataMCStack(dataFile,
@@ -1002,7 +1002,7 @@ void Draw_fake_rate_normalized(const char* dataFile = "fake_mu_merged.root",
                     "fake_CR_stack_Muon_eta_num.png",
                     lumi,
                     false,
-                    false,
+                    true,
                     outputFile);
 
     DrawDataMCStack(dataFile,
@@ -1012,7 +1012,7 @@ void Draw_fake_rate_normalized(const char* dataFile = "fake_mu_merged.root",
                     "fake_CR_stack_Muon_phi_den.png",
                     lumi,
                     false,
-                    false,
+                    true,
                     outputFile);
 
     DrawDataMCStack(dataFile,
@@ -1022,7 +1022,7 @@ void Draw_fake_rate_normalized(const char* dataFile = "fake_mu_merged.root",
                     "fake_CR_stack_Muon_phi_num.png",
                     lumi,
                     false,
-                    false,
+                    true,
                     outputFile);
 
     DrawDataMCStack(dataFile,
@@ -1052,7 +1052,7 @@ void Draw_fake_rate_normalized(const char* dataFile = "fake_mu_merged.root",
                     "fake_CR_stack_MET_phi_den.png",
                     lumi,
                     false,
-                    false,
+                    true,
                     outputFile);
 
     DrawDataMCStack(dataFile,
@@ -1062,7 +1062,7 @@ void Draw_fake_rate_normalized(const char* dataFile = "fake_mu_merged.root",
                     "fake_CR_stack_MET_phi_num.png",
                     lumi,
                     false,
-                    false,
+                    true,
                     outputFile);
 
     DrawDataMCStack(dataFile,

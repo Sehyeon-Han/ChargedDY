@@ -1,0 +1,11 @@
+{
+  "output": "fake_mu_ST_tW_top_5f_inclusiveDecays_merged.root",
+  "inputs": [
+    "Muon_fake_rate_ST_tW_top_9652946_454.root",
+    "Muon_fake_rate_ST_tW_top_9652946_455.root",
+    "Muon_fake_rate_ST_tW_top_9652946_456.root",
+    "Muon_fake_rate_ST_tW_top_9652946_457.root",
+    "Muon_fake_rate_ST_tW_top_9652946_458.root"
+  ],
+  "verified": true
+}

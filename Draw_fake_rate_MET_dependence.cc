@@ -138,16 +138,16 @@ bool SameBinning1D(const TH1D* h1,
 
 
 // ================================================================
-// Make MET-dependent fake rate
+// Make MET-dependent fake rates for all 20 (pT, |eta|) bins
 //
 // fake rate =
 // (Data numerator - Prompt numerator)
 // -----------------------------------
 // (Data denominator - Prompt denominator)
 //
-// Input histograms:
-//   h_fake_den_MET
-//   h_fake_num_MET
+// Input histogram names:
+//   h_fake_den_MET_pt1_eta1 ... h_fake_den_MET_pt5_eta4
+//   h_fake_num_MET_pt1_eta1 ... h_fake_num_MET_pt5_eta4
 //
 // MET bins:
 //   0 - 20 GeV
@@ -159,505 +159,623 @@ void MakeFakeRateMET(const TString& dataFile,
                      double lumi,
                      TFile* outputFile)
 {
-    // ============================================================
-    // Load Data
-    // ============================================================
-    TH1D* hDataDen =
-        LoadTH1D(
-            dataFile,
-            "h_fake_den_MET",
-            "h_data_den_MET"
-        );
+    const int N_ptBins = 5;
+    const int N_etaBins = 4;
 
-    TH1D* hDataNum =
-        LoadTH1D(
-            dataFile,
-            "h_fake_num_MET",
-            "h_data_num_MET"
-        );
+    double ptBins[]  = {65, 100, 150, 200, 300, 1500};
+    double etaBins[] = {0.0, 0.9, 1.2, 2.1, 2.4};
 
-    if(!hDataDen || !hDataNum)
+    for(int ipt = 0; ipt < N_ptBins; ++ipt)
     {
-        std::cerr
-            << "[ERROR] Cannot load Data fake-rate MET histograms."
-            << std::endl;
-
-        delete hDataDen;
-        delete hDataNum;
-
-        return;
-    }
-
-
-    // ============================================================
-    // Prompt MC total histograms
-    // ============================================================
-    TH1D* hPromptDen =
-        dynamic_cast<TH1D*>(
-            hDataDen->Clone("h_prompt_den_MET")
-        );
-
-    TH1D* hPromptNum =
-        dynamic_cast<TH1D*>(
-            hDataNum->Clone("h_prompt_num_MET")
-        );
-
-    hPromptDen->Reset("ICES");
-    hPromptNum->Reset("ICES");
-
-    hPromptDen->SetDirectory(nullptr);
-    hPromptNum->SetDirectory(nullptr);
-
-
-    // ============================================================
-    // Loop over prompt MC samples
-    // ============================================================
-    for(const SampleInfo& sample : samples)
-    {
-        TH1D* hDen =
-            LoadTH1D(
-                sample.fileName,
-                "h_fake_den_MET",
+        for(int ieta = 0; ieta < N_etaBins; ++ieta)
+        {
+            TString denHistName =
                 Form(
-                    "h_den_MET_%s",
-                    sample.sampleName.Data()
-                )
-            );
+                    "h_fake_den_MET_pt%d_eta%d",
+                    ipt + 1,
+                    ieta + 1
+                );
 
-        TH1D* hNum =
-            LoadTH1D(
-                sample.fileName,
-                "h_fake_num_MET",
+            TString numHistName =
                 Form(
-                    "h_num_MET_%s",
-                    sample.sampleName.Data()
-                )
-            );
-
-        if(!hDen || !hNum)
-        {
-            delete hDen;
-            delete hNum;
-            continue;
-        }
+                    "h_fake_num_MET_pt%d_eta%d",
+                    ipt + 1,
+                    ieta + 1
+                );
 
 
-        // --------------------------------------------------------
-        // Check binning
-        // --------------------------------------------------------
-        if(!SameBinning1D(hDataDen, hDen) ||
-           !SameBinning1D(hDataNum, hNum))
-        {
-            std::cerr
-                << "[ERROR] MET binning mismatch: "
-                << sample.fileName
-                << std::endl;
-
-            delete hDen;
-            delete hNum;
-
-            continue;
-        }
-
-
-        // --------------------------------------------------------
-        // MC normalization
-        // --------------------------------------------------------
-        double scale =
-            GetScale(sample, lumi);
-
-        if(scale == 0.0)
-        {
-            delete hDen;
-            delete hNum;
-            continue;
-        }
-
-
-        double rawDen =
-            hDen->Integral(
-                0,
-                hDen->GetNbinsX() + 1
-            );
-
-        double rawNum =
-            hNum->Integral(
-                0,
-                hNum->GetNbinsX() + 1
-            );
-
-
-        hDen->Scale(scale);
-        hNum->Scale(scale);
-
-
-        // --------------------------------------------------------
-        // Add to total prompt MC
-        // --------------------------------------------------------
-        hPromptDen->Add(hDen);
-        hPromptNum->Add(hNum);
-
-
-        std::cout
-            << "[MC] "
-            << sample.sampleName
-            << " | raw den = "
-            << rawDen
-            << " | raw num = "
-            << rawNum
-            << " | scale = "
-            << scale
-            << " | norm den = "
-            << hDen->Integral(
-                   0,
-                   hDen->GetNbinsX() + 1
-               )
-            << " | norm num = "
-            << hNum->Integral(
-                   0,
-                   hNum->GetNbinsX() + 1
-               )
-            << std::endl;
-
-
-        delete hDen;
-        delete hNum;
-    }
-
-
-    // ============================================================
-    // QCD = Data - Prompt MC
-    // ============================================================
-    TH1D* hFakeDen =
-        dynamic_cast<TH1D*>(
-            hDataDen->Clone(
-                "h_fake_den_MET_subtracted"
-            )
-        );
-
-    TH1D* hFakeNum =
-        dynamic_cast<TH1D*>(
-            hDataNum->Clone(
-                "h_fake_num_MET_subtracted"
-            )
-        );
-
-    hFakeDen->SetDirectory(nullptr);
-    hFakeNum->SetDirectory(nullptr);
-
-    hFakeDen->Add(hPromptDen, -1.0);
-    hFakeNum->Add(hPromptNum, -1.0);
-
-
-    // ============================================================
-    // Fake-rate histogram
-    // ============================================================
-    TH1D* hFakeRate =
-        dynamic_cast<TH1D*>(
-            hFakeNum->Clone(
-                "h_fake_rate_MET"
-            )
-        );
-
-    hFakeRate->Reset("ICES");
-    hFakeRate->SetDirectory(nullptr);
-
-    hFakeRate->SetTitle(
-        ";MET [GeV];Fake rate"
-    );
-
-
-    // ============================================================
-    // Calculate fake rate
-    // ============================================================
-    std::cout << std::endl;
-    std::cout
-        << "=============================================="
-        << std::endl;
-
-    std::cout
-        << "         MET DEPENDENT FAKE RATE"
-        << std::endl;
-
-    std::cout
-        << "=============================================="
-        << std::endl;
-
-
-    for(int bin = 1;
-        bin <= hFakeRate->GetNbinsX();
-        ++bin)
-    {
-        double low =
-            hFakeRate->GetXaxis()
-                     ->GetBinLowEdge(bin);
-
-        double high =
-            hFakeRate->GetXaxis()
-                     ->GetBinUpEdge(bin);
-
-
-        double dataDen =
-            hDataDen->GetBinContent(bin);
-
-        double dataNum =
-            hDataNum->GetBinContent(bin);
-
-        double promptDen =
-            hPromptDen->GetBinContent(bin);
-
-        double promptNum =
-            hPromptNum->GetBinContent(bin);
-
-        double denominator =
-            hFakeDen->GetBinContent(bin);
-
-        double numerator =
-            hFakeNum->GetBinContent(bin);
-
-
-        double denominatorError =
-            hFakeDen->GetBinError(bin);
-
-        double numeratorError =
-            hFakeNum->GetBinError(bin);
-
-
-        // --------------------------------------------------------
-        // Check denominator
-        // --------------------------------------------------------
-        if(denominator <= 0.0)
-        {
-            hFakeRate->SetBinContent(bin, 0.0);
-            hFakeRate->SetBinError(bin, 0.0);
-
-            std::cerr
-                << "[WARNING] denominator <= 0"
-                << " | MET = "
-                << low
-                << " - "
-                << high
-                << " GeV"
-                << " | denominator = "
-                << denominator
-                << std::endl;
-
-            continue;
-        }
-
-
-        // --------------------------------------------------------
-        // Fake rate
-        // --------------------------------------------------------
-        double rate =
-            numerator / denominator;
-
-
-        // --------------------------------------------------------
-        // Error propagation
-        //
-        // Approximation treating numerator and denominator
-        // uncertainties independently after prompt subtraction.
-        // --------------------------------------------------------
-        double rateError = 0.0;
-
-        if(numerator != 0.0)
-        {
-            rateError =
-                std::fabs(rate) *
-                std::sqrt(
-                    std::pow(
-                        numeratorError / numerator,
-                        2
-                    )
-                    +
-                    std::pow(
-                        denominatorError / denominator,
-                        2
+            // ====================================================
+            // Load Data
+            // ====================================================
+            TH1D* hDataDen =
+                LoadTH1D(
+                    dataFile,
+                    denHistName,
+                    Form(
+                        "h_data_den_MET_pt%d_eta%d",
+                        ipt + 1,
+                        ieta + 1
                     )
                 );
+
+            TH1D* hDataNum =
+                LoadTH1D(
+                    dataFile,
+                    numHistName,
+                    Form(
+                        "h_data_num_MET_pt%d_eta%d",
+                        ipt + 1,
+                        ieta + 1
+                    )
+                );
+
+            if(!hDataDen || !hDataNum)
+            {
+                std::cerr
+                    << "[ERROR] Cannot load Data histograms for "
+                    << "pt" << ipt + 1
+                    << " eta" << ieta + 1
+                    << std::endl;
+
+                delete hDataDen;
+                delete hDataNum;
+
+                continue;
+            }
+
+
+            // ====================================================
+            // Prompt MC total histograms
+            // ====================================================
+            TH1D* hPromptDen =
+                dynamic_cast<TH1D*>(
+                    hDataDen->Clone(
+                        Form(
+                            "h_prompt_den_MET_pt%d_eta%d",
+                            ipt + 1,
+                            ieta + 1
+                        )
+                    )
+                );
+
+            TH1D* hPromptNum =
+                dynamic_cast<TH1D*>(
+                    hDataNum->Clone(
+                        Form(
+                            "h_prompt_num_MET_pt%d_eta%d",
+                            ipt + 1,
+                            ieta + 1
+                        )
+                    )
+                );
+
+            hPromptDen->Reset("ICES");
+            hPromptNum->Reset("ICES");
+
+            hPromptDen->SetDirectory(nullptr);
+            hPromptNum->SetDirectory(nullptr);
+
+
+            // ====================================================
+            // Loop over prompt MC samples
+            // ====================================================
+            for(const SampleInfo& sample : samples)
+            {
+                TH1D* hDen =
+                    LoadTH1D(
+                        sample.fileName,
+                        denHistName,
+                        Form(
+                            "h_den_MET_%s_pt%d_eta%d",
+                            sample.sampleName.Data(),
+                            ipt + 1,
+                            ieta + 1
+                        )
+                    );
+
+                TH1D* hNum =
+                    LoadTH1D(
+                        sample.fileName,
+                        numHistName,
+                        Form(
+                            "h_num_MET_%s_pt%d_eta%d",
+                            sample.sampleName.Data(),
+                            ipt + 1,
+                            ieta + 1
+                        )
+                    );
+
+                if(!hDen || !hNum)
+                {
+                    delete hDen;
+                    delete hNum;
+                    continue;
+                }
+
+
+                // -----------------------------------------------
+                // Check binning
+                // -----------------------------------------------
+                if(!SameBinning1D(hDataDen, hDen) ||
+                   !SameBinning1D(hDataNum, hNum))
+                {
+                    std::cerr
+                        << "[ERROR] MET binning mismatch: "
+                        << sample.fileName
+                        << " | pt" << ipt + 1
+                        << " eta" << ieta + 1
+                        << std::endl;
+
+                    delete hDen;
+                    delete hNum;
+
+                    continue;
+                }
+
+
+                // -----------------------------------------------
+                // MC normalization
+                // scale = xsec * lumi / sumW
+                // -----------------------------------------------
+                double scale =
+                    GetScale(sample, lumi);
+
+                if(scale == 0.0)
+                {
+                    delete hDen;
+                    delete hNum;
+                    continue;
+                }
+
+
+                double rawDen =
+                    hDen->Integral(
+                        0,
+                        hDen->GetNbinsX() + 1
+                    );
+
+                double rawNum =
+                    hNum->Integral(
+                        0,
+                        hNum->GetNbinsX() + 1
+                    );
+
+
+                hDen->Scale(scale);
+                hNum->Scale(scale);
+
+
+                // -----------------------------------------------
+                // Add to total prompt MC
+                // -----------------------------------------------
+                hPromptDen->Add(hDen);
+                hPromptNum->Add(hNum);
+
+
+                std::cout
+                    << "[MC] "
+                    << sample.sampleName
+                    << " | pt" << ipt + 1
+                    << " eta" << ieta + 1
+                    << " | raw den = "
+                    << rawDen
+                    << " | raw num = "
+                    << rawNum
+                    << " | scale = "
+                    << scale
+                    << " | norm den = "
+                    << hDen->Integral(
+                           0,
+                           hDen->GetNbinsX() + 1
+                       )
+                    << " | norm num = "
+                    << hNum->Integral(
+                           0,
+                           hNum->GetNbinsX() + 1
+                       )
+                    << std::endl;
+
+
+                delete hDen;
+                delete hNum;
+            }
+
+
+            // ====================================================
+            // QCD = Data - Prompt MC
+            // ====================================================
+            TH1D* hFakeDen =
+                dynamic_cast<TH1D*>(
+                    hDataDen->Clone(
+                        Form(
+                            "h_fake_den_MET_subtracted_pt%d_eta%d",
+                            ipt + 1,
+                            ieta + 1
+                        )
+                    )
+                );
+
+            TH1D* hFakeNum =
+                dynamic_cast<TH1D*>(
+                    hDataNum->Clone(
+                        Form(
+                            "h_fake_num_MET_subtracted_pt%d_eta%d",
+                            ipt + 1,
+                            ieta + 1
+                        )
+                    )
+                );
+
+            hFakeDen->SetDirectory(nullptr);
+            hFakeNum->SetDirectory(nullptr);
+
+            hFakeDen->Add(hPromptDen, -1.0);
+            hFakeNum->Add(hPromptNum, -1.0);
+
+
+            // ====================================================
+            // Fake-rate histogram
+            // ====================================================
+            TH1D* hFakeRate =
+                dynamic_cast<TH1D*>(
+                    hFakeNum->Clone(
+                        Form(
+                            "h_fake_rate_MET_pt%d_eta%d",
+                            ipt + 1,
+                            ieta + 1
+                        )
+                    )
+                );
+
+            hFakeRate->Reset("ICES");
+            hFakeRate->SetDirectory(nullptr);
+
+
+            TString ptLabel;
+
+            if(ipt == N_ptBins - 1)
+            {
+                ptLabel =
+                    Form(
+                        "p_{T} #geq %.0f GeV",
+                        ptBins[ipt]
+                    );
+            }
+            else
+            {
+                ptLabel =
+                    Form(
+                        "%.0f #leq p_{T} < %.0f GeV",
+                        ptBins[ipt],
+                        ptBins[ipt + 1]
+                    );
+            }
+
+            TString etaLabel =
+                Form(
+                    "%.1f #leq |#eta| < %.1f",
+                    etaBins[ieta],
+                    etaBins[ieta + 1]
+                );
+
+            hFakeRate->SetTitle(
+                Form(
+                    "%s, %s;MET [GeV];Fake rate",
+                    ptLabel.Data(),
+                    etaLabel.Data()
+                )
+            );
+
+
+            // ====================================================
+            // Calculate fake rate
+            // ====================================================
+            std::cout << std::endl;
+            std::cout
+                << "=============================================="
+                << std::endl;
+
+            std::cout
+                << " MET DEPENDENT FAKE RATE"
+                << " | pt" << ipt + 1
+                << " eta" << ieta + 1
+                << std::endl;
+
+            std::cout
+                << " "
+                << ptLabel
+                << ", "
+                << etaLabel
+                << std::endl;
+
+            std::cout
+                << "=============================================="
+                << std::endl;
+
+
+            for(int bin = 1;
+                bin <= hFakeRate->GetNbinsX();
+                ++bin)
+            {
+                double low =
+                    hFakeRate->GetXaxis()
+                             ->GetBinLowEdge(bin);
+
+                double high =
+                    hFakeRate->GetXaxis()
+                             ->GetBinUpEdge(bin);
+
+
+                double dataDen =
+                    hDataDen->GetBinContent(bin);
+
+                double dataNum =
+                    hDataNum->GetBinContent(bin);
+
+                double promptDen =
+                    hPromptDen->GetBinContent(bin);
+
+                double promptNum =
+                    hPromptNum->GetBinContent(bin);
+
+                double denominator =
+                    hFakeDen->GetBinContent(bin);
+
+                double numerator =
+                    hFakeNum->GetBinContent(bin);
+
+
+                double denominatorError =
+                    hFakeDen->GetBinError(bin);
+
+                double numeratorError =
+                    hFakeNum->GetBinError(bin);
+
+
+                // -----------------------------------------------
+                // Check denominator
+                // -----------------------------------------------
+                if(denominator <= 0.0)
+                {
+                    hFakeRate->SetBinContent(bin, 0.0);
+                    hFakeRate->SetBinError(bin, 0.0);
+
+                    std::cerr
+                        << "[WARNING] denominator <= 0"
+                        << " | pt" << ipt + 1
+                        << " eta" << ieta + 1
+                        << " | MET = "
+                        << low
+                        << " - "
+                        << high
+                        << " GeV"
+                        << " | denominator = "
+                        << denominator
+                        << std::endl;
+
+                    continue;
+                }
+
+
+                // -----------------------------------------------
+                // Fake rate
+                // -----------------------------------------------
+                double rate =
+                    numerator / denominator;
+
+
+                // -----------------------------------------------
+                // Error propagation
+                //
+                // Same convention as the original macro:
+                // numerator and denominator uncertainties are
+                // treated independently after prompt subtraction.
+                // -----------------------------------------------
+                double rateError = 0.0;
+
+                if(numerator != 0.0)
+                {
+                    rateError =
+                        std::fabs(rate) *
+                        std::sqrt(
+                            std::pow(
+                                numeratorError / numerator,
+                                2
+                            )
+                            +
+                            std::pow(
+                                denominatorError / denominator,
+                                2
+                            )
+                        );
+                }
+                else
+                {
+                    rateError =
+                        numeratorError / denominator;
+                }
+
+
+                hFakeRate->SetBinContent(
+                    bin,
+                    rate
+                );
+
+                hFakeRate->SetBinError(
+                    bin,
+                    rateError
+                );
+
+
+                // -----------------------------------------------
+                // Print bin information
+                // -----------------------------------------------
+                std::cout << std::endl;
+
+                std::cout
+                    << "MET "
+                    << low
+                    << " - "
+                    << high
+                    << " GeV"
+                    << std::endl;
+
+                std::cout
+                    << "  Data denominator   = "
+                    << dataDen
+                    << std::endl;
+
+                std::cout
+                    << "  Prompt denominator = "
+                    << promptDen
+                    << std::endl;
+
+                std::cout
+                    << "  Fake denominator   = "
+                    << denominator
+                    << std::endl;
+
+                std::cout
+                    << "  Data numerator     = "
+                    << dataNum
+                    << std::endl;
+
+                std::cout
+                    << "  Prompt numerator   = "
+                    << promptNum
+                    << std::endl;
+
+                std::cout
+                    << "  Fake numerator     = "
+                    << numerator
+                    << std::endl;
+
+                std::cout
+                    << "  Fake rate          = "
+                    << rate
+                    << " +/- "
+                    << rateError
+                    << std::endl;
+            }
+
+
+            std::cout << std::endl;
+            std::cout
+                << "=============================================="
+                << std::endl;
+
+
+            // ====================================================
+            // Canvas
+            // ====================================================
+            TCanvas* cFakeRate =
+                new TCanvas(
+                    Form(
+                        "c_fake_rate_MET_pt%d_eta%d",
+                        ipt + 1,
+                        ieta + 1
+                    ),
+                    "Fake rate vs MET",
+                    900,
+                    700
+                );
+
+            cFakeRate->SetTopMargin(0.08);
+            cFakeRate->SetBottomMargin(0.13);
+            cFakeRate->SetLeftMargin(0.13);
+            cFakeRate->SetRightMargin(0.05);
+
+
+            hFakeRate->SetMarkerStyle(20);
+            hFakeRate->SetMarkerSize(1.2);
+            hFakeRate->SetLineWidth(2);
+
+            hFakeRate->SetMinimum(0.0);
+            hFakeRate->SetMaximum(1.0);
+
+
+            hFakeRate->GetXaxis()
+                     ->SetTitle("MET [GeV]");
+
+            hFakeRate->GetYaxis()
+                     ->SetTitle("Fake rate");
+
+
+            hFakeRate->GetXaxis()
+                     ->SetTitleSize(0.055);
+
+            hFakeRate->GetYaxis()
+                     ->SetTitleSize(0.055);
+
+
+            hFakeRate->GetXaxis()
+                     ->SetLabelSize(0.045);
+
+            hFakeRate->GetYaxis()
+                     ->SetLabelSize(0.045);
+
+
+            hFakeRate->GetXaxis()
+                     ->SetTitleOffset(1.05);
+
+            hFakeRate->GetYaxis()
+                     ->SetTitleOffset(1.10);
+
+
+            hFakeRate->Draw("E1");
+
+
+            // ====================================================
+            // Save PNG
+            // ====================================================
+            cFakeRate->SaveAs(
+                Form(
+                    "fake_mu_rate_MET_dependence_pt%d_eta%d.png",
+                    ipt + 1,
+                    ieta + 1
+                )
+            );
+
+
+            // ====================================================
+            // Save ROOT objects
+            // ====================================================
+            if(outputFile)
+            {
+                outputFile->cd();
+
+                hDataDen->Write();
+                hDataNum->Write();
+
+                hPromptDen->Write();
+                hPromptNum->Write();
+
+                hFakeDen->Write();
+                hFakeNum->Write();
+
+                hFakeRate->Write();
+
+                cFakeRate->Write();
+            }
+
+
+            // ====================================================
+            // Cleanup
+            // ====================================================
+            delete cFakeRate;
+
+            delete hDataDen;
+            delete hDataNum;
+
+            delete hPromptDen;
+            delete hPromptNum;
+
+            delete hFakeDen;
+            delete hFakeNum;
+
+            delete hFakeRate;
         }
-        else
-        {
-            rateError =
-                numeratorError / denominator;
-        }
-
-
-        hFakeRate->SetBinContent(
-            bin,
-            rate
-        );
-
-        hFakeRate->SetBinError(
-            bin,
-            rateError
-        );
-
-
-        // --------------------------------------------------------
-        // Print bin information
-        // --------------------------------------------------------
-        std::cout << std::endl;
-
-        std::cout
-            << "MET "
-            << low
-            << " - "
-            << high
-            << " GeV"
-            << std::endl;
-
-        std::cout
-            << "  Data denominator   = "
-            << dataDen
-            << std::endl;
-
-        std::cout
-            << "  Prompt denominator = "
-            << promptDen
-            << std::endl;
-
-        std::cout
-            << "  Fake denominator   = "
-            << denominator
-            << std::endl;
-
-        std::cout
-            << "  Data numerator     = "
-            << dataNum
-            << std::endl;
-
-        std::cout
-            << "  Prompt numerator   = "
-            << promptNum
-            << std::endl;
-
-        std::cout
-            << "  Fake numerator     = "
-            << numerator
-            << std::endl;
-
-        std::cout
-            << "  Fake rate          = "
-            << rate
-            << " +/- "
-            << rateError
-            << std::endl;
     }
-
-
-    std::cout << std::endl;
-
-    std::cout
-        << "=============================================="
-        << std::endl;
-
-
-    // ============================================================
-    // Canvas
-    //
-    // x-axis : MET
-    // y-axis : fake rate
-    // ============================================================
-    TCanvas* cFakeRate =
-        new TCanvas(
-            "c_fake_rate_MET",
-            "Fake rate vs MET",
-            900,
-            700
-        );
-
-    cFakeRate->SetTopMargin(0.08);
-    cFakeRate->SetBottomMargin(0.13);
-    cFakeRate->SetLeftMargin(0.13);
-    cFakeRate->SetRightMargin(0.05);
-
-
-    hFakeRate->SetMarkerStyle(20);
-    hFakeRate->SetMarkerSize(1.2);
-    hFakeRate->SetLineWidth(2);
-
-    hFakeRate->SetMinimum(0.0);
-    hFakeRate->SetMaximum(1.0);
-
-
-    hFakeRate->GetXaxis()
-             ->SetTitle("MET [GeV]");
-
-    hFakeRate->GetYaxis()
-             ->SetTitle("Fake rate");
-
-
-    hFakeRate->GetXaxis()
-             ->SetTitleSize(0.055);
-
-    hFakeRate->GetYaxis()
-             ->SetTitleSize(0.055);
-
-
-    hFakeRate->GetXaxis()
-             ->SetLabelSize(0.045);
-
-    hFakeRate->GetYaxis()
-             ->SetLabelSize(0.045);
-
-
-    hFakeRate->GetXaxis()
-             ->SetTitleOffset(1.05);
-
-    hFakeRate->GetYaxis()
-             ->SetTitleOffset(1.10);
-
-
-    hFakeRate->Draw("E1");
-
-
-    // ============================================================
-    // Save PNG
-    // ============================================================
-    cFakeRate->SaveAs(
-        "fake_mu_rate_MET_dependence.png"
-    );
-
-
-    // ============================================================
-    // Save ROOT objects
-    // ============================================================
-    if(outputFile)
-    {
-        outputFile->cd();
-
-        hDataDen->Write();
-        hDataNum->Write();
-
-        hPromptDen->Write();
-        hPromptNum->Write();
-
-        hFakeDen->Write();
-        hFakeNum->Write();
-
-        hFakeRate->Write();
-
-        cFakeRate->Write();
-    }
-
-
-    // ============================================================
-    // Cleanup
-    // ============================================================
-    delete cFakeRate;
-
-    delete hDataDen;
-    delete hDataNum;
-
-    delete hPromptDen;
-    delete hPromptNum;
-
-    delete hFakeDen;
-    delete hFakeNum;
-
-    delete hFakeRate;
 }
 
 
@@ -978,8 +1096,10 @@ void Draw_fake_rate_MET_dependence(
         << std::endl;
 
     std::cout
-        << "Output PNG       : "
-        << "fake_mu_rate_MET_dependence.png"
+        << "Output PNGs      : "
+        << "fake_mu_rate_MET_dependence_pt1_eta1.png"
+        << " ... "
+        << "fake_mu_rate_MET_dependence_pt5_eta4.png"
         << std::endl;
 
     std::cout

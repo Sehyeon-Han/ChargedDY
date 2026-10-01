@@ -1,0 +1,18 @@
+{
+  "output": "fake_mu_ST_s-channel_4f_leptonDecays_merged.root",
+  "inputs": [
+    "Muon_fake_rate_ST_s_channel_9652946_343.root",
+    "Muon_fake_rate_ST_s_channel_9652946_344.root",
+    "Muon_fake_rate_ST_s_channel_9652946_345.root",
+    "Muon_fake_rate_ST_s_channel_9652946_346.root",
+    "Muon_fake_rate_ST_s_channel_9652946_347.root",
+    "Muon_fake_rate_ST_s_channel_9652946_348.root",
+    "Muon_fake_rate_ST_s_channel_9652946_349.root",
+    "Muon_fake_rate_ST_s_channel_9652946_350.root",
+    "Muon_fake_rate_ST_s_channel_9652946_351.root",
+    "Muon_fake_rate_ST_s_channel_9652946_352.root",
+    "Muon_fake_rate_ST_s_channel_9652946_353.root",
+    "Muon_fake_rate_ST_s_channel_9652946_354.root"
+  ],
+  "verified": true
+}

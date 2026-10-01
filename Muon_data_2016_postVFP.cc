@@ -29,6 +29,7 @@ void Muon_data_2016_postVFP(const char* inFile,
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<Float_t> Muon_iso(reader, "Muon_pfRelIso04_all");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_mediumId(reader, "Muon_mediumId");
     TTreeReaderValue<Bool_t> HLT_Mu50(reader, "HLT_Mu50");
     TTreeReaderValue<Float_t> MET_pt(reader, "MET_pt");
     TTreeReaderValue<Float_t> MET_phi(reader, "MET_phi");
@@ -60,7 +61,7 @@ void Muon_data_2016_postVFP(const char* inFile,
             {
                 if(i == selIdx) continue;
 
-                if(Muon_pt[i] > 20.0)
+                if(Muon_pt[i] > 20.0 && Muon_mediumId[i] && std::fabs(Muon_eta[i]) < 2.4)
                 {
                     ExtraMuon = true;
                     break;

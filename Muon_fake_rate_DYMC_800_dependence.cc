@@ -12,18 +12,36 @@
 #include <algorithm>
 #include <TStopwatch.h>
 #include <TStyle.h>
+#include <TString.h>
 
 void Muon_fake_rate_DYMC_800_dependence(const char* inFile = "/pnfs/knu.ac.kr/data/cms/store/user/sungwon/DY_Run2_UL_NanoAOD/2016_preVFP/DYJetsToMuMu_M-800to1000/*/*/*/*/*.root",
                                             const char* outFile = "fake_mu_DYMC_800_merged_dependence.root")
 {
-    TH1::SetDefaultSumw2();
     gStyle->SetOptStat(0);
+
+    double ptBins[] = {65, 100, 150, 200, 300, 1500};
+    const int N_ptBins = 5;
+
+    double etaBins[] = {0.0, 0.9, 1.2, 2.1, 2.4};
+    const int N_etaBins = 4;
 
     double metBins[] = {0.0, 20.0, 40.0, 65.0};
     const int N_metBins = 3;
 
-    TH1D *h_fake_den_MET = new TH1D("h_fake_den_MET", "Fake-rate denominator;MET [GeV];Events", N_metBins, metBins);
-    TH1D *h_fake_num_MET = new TH1D("h_fake_num_MET", "Fake-rate numerator;MET [GeV];Events", N_metBins, metBins);
+    TH1D* h_fake_den_MET[N_ptBins][N_etaBins];
+    TH1D* h_fake_num_MET[N_ptBins][N_etaBins];
+
+    for(int i = 0; i < N_ptBins; ++i)
+    {
+        for(int j = 0; j < N_etaBins; ++j)
+        {
+            h_fake_den_MET[i][j] = new TH1D(Form("h_fake_den_MET_pt%d_eta%d", i + 1, j + 1), Form("Fake-rate denominator;MET [GeV];Events"), N_metBins, metBins);
+            h_fake_num_MET[i][j] = new TH1D(Form("h_fake_num_MET_pt%d_eta%d", i + 1, j + 1), Form("Fake-rate numerator;MET [GeV];Events"), N_metBins, metBins);
+
+            h_fake_den_MET[i][j]->Sumw2();
+            h_fake_num_MET[i][j]->Sumw2();
+        }
+    }
 
     TFile *f_SF_ID = TFile::Open("eff_mu_ID.root");
     TFile *f_SF_ISO = TFile::Open("eff_mu_ISO.root");
@@ -58,6 +76,7 @@ void Muon_fake_rate_DYMC_800_dependence(const char* inFile = "/pnfs/knu.ac.kr/da
     TTreeReaderArray<Float_t> Muon_eta(reader, "Muon_eta");
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_looseId(reader, "Muon_looseId");
     TTreeReaderArray<Float_t> Muon_tkRelIso(reader, "Muon_tkRelIso");
     TTreeReaderArray<Float_t> Muon_dxy(reader, "Muon_dxy");
     TTreeReaderArray<Float_t> Muon_dxyErr(reader, "Muon_dxyErr");
@@ -73,10 +92,8 @@ void Muon_fake_rate_DYMC_800_dependence(const char* inFile = "/pnfs/knu.ac.kr/da
     TTreeReaderValue<Float_t> MET_pt(reader, "MET_pt");
     TTreeReaderValue<Float_t> MET_phi(reader, "MET_phi");
     TTreeReaderValue<Float_t> genWeight(reader, "genWeight");
+    TTreeReaderValue<Float_t> L1PreFiringWeight_Nom(reader, "L1PreFiringWeight_Nom");
     TTreeReaderValue<Float_t> Pileup_nTrueInt(reader, "Pileup_nTrueInt");
-
-    double N_den = 0.0;
-    double N_num = 0.0;
 
     while(reader.Next())
     {
@@ -107,7 +124,7 @@ void Muon_fake_rate_DYMC_800_dependence(const char* inFile = "/pnfs/knu.ac.kr/da
         {
             if(i == looseIdx) continue;
 
-            if(Muon_pt[i] > 20.0)
+            if(Muon_pt[i] > 20.0 && Muon_looseId[i] && std::fabs(Muon_eta[i]) < 2.4)
             {
                 extraMuon = true;
                 break;
@@ -123,8 +140,35 @@ void Muon_fake_rate_DYMC_800_dependence(const char* inFile = "/pnfs/knu.ac.kr/da
         double abseta = std::fabs(eta);
         double phi = Muon_phi[i];
 
-        if(pt < 65.0 || pt >= 100.0) continue;
-        if(abseta >= 0.9) continue;
+        int ptBin = -1;
+        int etaBin = -1;
+
+        for(int j = 0; j < N_ptBins; ++j)
+        {
+            if(j == N_ptBins - 1)
+            {
+                if(pt >= ptBins[j]) ptBin = j;
+            }
+            else
+            {
+                if(pt >= ptBins[j] && pt < ptBins[j + 1])
+                {
+                    ptBin = j;
+                    break;
+                }
+            }
+        }
+
+        for(int j = 0; j < N_etaBins; ++j)
+        {
+            if(abseta >= etaBins[j] && abseta < etaBins[j + 1])
+            {
+                etaBin = j;
+                break;
+            }
+        }
+
+        if(ptBin < 0 || etaBin < 0) continue;
 
         double sf_id = GetSF(h2D_SF_ID, abseta, pt);
         double sf_iso = GetSF(h2D_SF_ISO, abseta, pt);
@@ -134,7 +178,7 @@ void Muon_fake_rate_DYMC_800_dependence(const char* inFile = "/pnfs/knu.ac.kr/da
         bin_pu = std::max(1, std::min(bin_pu, hPUw->GetNbinsX()));
         double wpu = hPUw->GetBinContent(bin_pu);
 
-        double w = (double)(*genWeight) * sf_id * sf_iso * sf_trig * wpu;
+        double w = (double)(*genWeight) * sf_id * sf_iso * sf_trig * wpu * (*L1PreFiringWeight_Nom);
 
         double dphiMuonMET = std::fabs(TVector2::Phi_mpi_pi(phi - *MET_phi));
 
@@ -164,22 +208,27 @@ void Muon_fake_rate_DYMC_800_dependence(const char* inFile = "/pnfs/knu.ac.kr/da
 
         if(!hasBackToBackJet) continue;
 
-        h_fake_den_MET->Fill(*MET_pt, w);
-        N_den += w;
+        h_fake_den_MET[ptBin][etaBin]->Fill(*MET_pt, w);
+
 
         bool passTight = Muon_highPtId[i] == 2 && Muon_tkRelIso[i] < 0.10;
 
         if(passTight)
         {
-            h_fake_num_MET->Fill(*MET_pt, w);
-            N_num += w;
+            h_fake_num_MET[ptBin][etaBin]->Fill(*MET_pt, w);
         }
     }
 
     TFile *fout = TFile::Open(outFile, "RECREATE");
 
-    h_fake_den_MET->Write();
-    h_fake_num_MET->Write();
+    for(int i = 0; i < N_ptBins; ++i)
+    {
+        for(int j = 0; j < N_etaBins; ++j)
+        {
+            h_fake_den_MET[i][j]->Write();
+            h_fake_num_MET[i][j]->Write();
+        }
+    }
 
     fout->Close();
 

@@ -1,0 +1,13 @@
+{
+  "output": "fake_mu_WToTauNu_M-2000_merged.root",
+  "inputs": [
+    "Muon_fake_rate_WToTauNu_M2000_9652946_186.root",
+    "Muon_fake_rate_WToTauNu_M2000_9652946_187.root",
+    "Muon_fake_rate_WToTauNu_M2000_9652946_188.root",
+    "Muon_fake_rate_WToTauNu_M2000_9652946_189.root",
+    "Muon_fake_rate_WToTauNu_M2000_9652946_190.root",
+    "Muon_fake_rate_WToTauNu_M2000_9652946_191.root",
+    "Muon_fake_rate_WToTauNu_M2000_9652946_192.root"
+  ],
+  "verified": true
+}

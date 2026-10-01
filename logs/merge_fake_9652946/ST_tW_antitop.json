@@ -1,0 +1,10 @@
+{
+  "output": "fake_mu_ST_tW_antitop_5f_inclusiveDecays_merged.root",
+  "inputs": [
+    "Muon_fake_rate_ST_tW_antitop_9652946_450.root",
+    "Muon_fake_rate_ST_tW_antitop_9652946_451.root",
+    "Muon_fake_rate_ST_tW_antitop_9652946_452.root",
+    "Muon_fake_rate_ST_tW_antitop_9652946_453.root"
+  ],
+  "verified": true
+}

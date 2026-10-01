@@ -12,7 +12,7 @@
 void Muon_data_2016_preVFP(const char* inFile,
                            const char* outFile = "Muon_data_2016_preVFP.root")
 {
-    double mTBins[] = {200, 250, 300, 350, 400, 500, 600, 700, 800, 1000, 1500, 2000, 3500};
+    double mTBins[] = {200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
     int nmTBins = sizeof(mTBins) / sizeof(double) - 1;
 
     TH1D *h_Muon_pt = new TH1D("h_Muon_pt", "Muon p_{T}; p_{T} [GeV]; Events", 30, 65, 1500);
@@ -32,6 +32,7 @@ void Muon_data_2016_preVFP(const char* inFile,
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<Float_t> Muon_iso(reader, "Muon_tkRelIso");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_looseId(reader, "Muon_looseId");
     TTreeReaderValue<Bool_t> HLT_Mu50(reader, "HLT_Mu50");
     TTreeReaderValue<Bool_t> HLT_TkMu50(reader, "HLT_TkMu50");
     TTreeReaderValue<Float_t> MET_pt(reader, "MET_pt");
@@ -64,7 +65,7 @@ void Muon_data_2016_preVFP(const char* inFile,
             {
                 if(i == selIdx) continue;
 
-                if(Muon_pt[i] > 20.0)
+                if(Muon_pt[i] > 20.0 && Muon_looseId[i] && std::fabs(Muon_eta[i]) < 2.4)
                 {
                     ExtraMuon = true;
                     break;

@@ -1,0 +1,28 @@
+{
+  "output": "fake_mu_WToMuNu_M-500_merged.root",
+  "inputs": [
+    "Muon_fake_rate_WToMuNu_M500_9652946_41.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_42.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_43.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_44.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_45.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_46.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_47.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_48.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_49.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_50.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_51.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_52.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_53.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_54.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_55.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_56.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_57.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_58.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_59.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_60.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_61.root",
+    "Muon_fake_rate_WToMuNu_M500_9652946_62.root"
+  ],
+  "verified": true
+}

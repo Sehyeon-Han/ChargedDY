@@ -71,6 +71,7 @@ void Muon_real_rate(const char* inFile,
     TTreeReaderArray<Int_t> GenPart_status(reader, "GenPart_status");
     TTreeReaderArray<Int_t> GenPart_statusFlags(reader, "GenPart_statusFlags");
     TTreeReaderValue<Float_t> genWeight(reader, "genWeight");
+    TTreeReaderValue<Float_t> L1PreFiringWeight_Nom(reader, "L1PreFiringWeight_Nom");
     TTreeReaderValue<Float_t> Pileup_nTrueInt(reader, "Pileup_nTrueInt");
 
     double N_L = 0.0;
@@ -93,7 +94,7 @@ void Muon_real_rate(const char* inFile,
             bin_pu = std::max(1, std::min(bin_pu, hPUw->GetNbinsX()));
             double wpu = hPUw->GetBinContent(bin_pu);
 
-            double w = (double)(*genWeight) * sf_id * sf_iso * sf_trig * wpu;
+            double w = (double)(*genWeight) * sf_id * sf_iso * sf_trig * wpu * (*L1PreFiringWeight_Nom);
 
             if(pt < 65.0) continue;
             if(aeta >= 2.4) continue;

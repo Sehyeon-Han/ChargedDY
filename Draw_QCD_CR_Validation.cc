@@ -527,7 +527,10 @@ void Draw_QCD_CR_Validation()
 
         const bool useLogY =
             (p.numHist == "h_Muon_pt_num" ||
-             p.numHist == "h_MET_pt_num");
+             p.numHist == "h_MET_pt_num" ||
+             p.numHist == "h_Muon_phi_num" ||
+             p.numHist == "h_Muon_eta_num" ||
+             p.numHist == "h_MET_phi_num");
 
         std::cout
             << "\n\n========================================"

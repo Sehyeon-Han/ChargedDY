@@ -16,7 +16,7 @@ void Muon_DYMC_1500_2016_preVFP(const char* inFile = "/pnfs/knu.ac.kr/data/cms/s
 {
     TH1::SetDefaultSumw2();
 
-    double mTBins[] = {200, 250, 300, 350, 400, 500, 600, 700, 800, 1000, 1500, 2000, 3500};
+    double mTBins[] = {200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
     int nmTBins = sizeof(mTBins) / sizeof(double) - 1;
     
     TH1D *h_Muon_pt = new TH1D("h_Muon_pt", "Muon p_{T}; p_{T} [GeV]; Events", 30, 65, 1500);
@@ -60,11 +60,13 @@ void Muon_DYMC_1500_2016_preVFP(const char* inFile = "/pnfs/knu.ac.kr/data/cms/s
     TTreeReaderArray<Float_t> Muon_phi(reader, "Muon_phi");
     TTreeReaderArray<Float_t> Muon_iso(reader, "Muon_tkRelIso");
     TTreeReaderArray<UChar_t> Muon_highPtId(reader, "Muon_highPtId");
+    TTreeReaderArray<Bool_t> Muon_looseId(reader, "Muon_looseId");
     TTreeReaderValue<Bool_t> HLT_TkMu50(reader, "HLT_TkMu50");
     TTreeReaderValue<Bool_t> HLT_Mu50(reader, "HLT_Mu50");
     TTreeReaderValue<Float_t> MET_pt(reader, "MET_pt");
     TTreeReaderValue<Float_t> MET_phi(reader, "MET_phi");
     TTreeReaderValue<Float_t> genWeight(reader, "genWeight");
+    TTreeReaderValue<Float_t> L1PreFiringWeight_Nom(reader, "L1PreFiringWeight_Nom");
     TTreeReaderValue<Float_t> Pileup_nTrueInt(reader, "Pileup_nTrueInt");
 
     while(reader.Next())
@@ -94,7 +96,7 @@ void Muon_DYMC_1500_2016_preVFP(const char* inFile = "/pnfs/knu.ac.kr/data/cms/s
             {
                 if(i == selIdx) continue;
 
-                if(Muon_pt[i] > 20.0)
+                if(Muon_pt[i] > 20.0 && Muon_looseId[i] && std::fabs(Muon_eta[i]) < 2.4)
                 {
                     ExtraMuon = true;
                     break;
@@ -115,7 +117,7 @@ void Muon_DYMC_1500_2016_preVFP(const char* inFile = "/pnfs/knu.ac.kr/data/cms/s
             bin_pu = std::max(1, std::min(bin_pu, hPUw->GetNbinsX()));
             double wpu = hPUw->GetBinContent(bin_pu);
 
-            double w = (double)(*genWeight) * sf_id * sf_iso * sf_trig * wpu;
+            double w = (double)(*genWeight) * sf_id * sf_iso * sf_trig * wpu * (*L1PreFiringWeight_Nom);
             
             double dphi = TVector2::Phi_mpi_pi(Muon_phi[selIdx] - *MET_phi);
             double mT = std::sqrt(2.0 * Muon_pt[selIdx] * (*MET_pt) * (1.0 - std::cos(dphi)));
