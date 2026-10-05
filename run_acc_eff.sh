@@ -10,7 +10,7 @@ input_file=$2
 cluster_id=$3
 process_id=$4
 case "$mass" in
-    200|500|1000|2000) ;;
+    100|200|500|1000|2000) ;;
     *) echo "Unsupported mass: $mass" >&2; exit 2 ;;
 esac
 if [[ ! "$cluster_id" =~ ^[0-9]+$ || ! "$process_id" =~ ^[0-9]+$ ]]; then

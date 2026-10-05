@@ -1,7 +1,7 @@
 universe = vanilla
 executable = run_sumW.sh
 
-arguments = $(filename) sumW_WToTauNu_M-2000_2016_preVFP_$(Process).txt
+arguments = $(filename) sumW_WToMuNu_M-100_2016_preVFP_$(Process).txt
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
@@ -12,4 +12,4 @@ output = logs_sumW/job_$(Cluster)_$(Process).out
 error  = logs_sumW/job_$(Cluster)_$(Process).err
 log    = logs_sumW/job_$(Cluster)_$(Process).log
 
-queue filename from input_WToTauNu_M-2000_2016_preVFP.txt
+queue filename from input_WToMuNu_M-100_2016_preVFP.txt

@@ -16,7 +16,7 @@ void Muon_WZTo1L3Nu_4f_2016_preVFP(const char* inFile,
 {
     TH1::SetDefaultSumw2();
 
-    double mTBins[] = {200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
+    double mTBins[] = {150, 200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
     int nmTBins = sizeof(mTBins) / sizeof(double) - 1;
     
     TH1D *h_Muon_pt = new TH1D("h_Muon_pt", "Muon p_{T}; p_{T} [GeV]; Events", 30, 65, 1500);
@@ -122,7 +122,7 @@ void Muon_WZTo1L3Nu_4f_2016_preVFP(const char* inFile,
             double dphi = TVector2::Phi_mpi_pi(Muon_phi[selIdx] - *MET_phi);
             double mT = std::sqrt(2.0 * Muon_pt[selIdx] * (*MET_pt) * (1.0 - std::cos(dphi)));
 
-            if(mT > 200)
+            if(mT >= 150)
             {
                 h_Muon_pt->Fill(Muon_pt[selIdx], w);
                 h_Muon_eta->Fill(Muon_eta[selIdx], w);

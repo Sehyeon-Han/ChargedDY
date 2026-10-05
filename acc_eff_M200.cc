@@ -16,8 +16,13 @@ void acc_eff_M200(const char* inFile,
 {
     TH1::SetDefaultSumw2();
 
-    double mTBins[] = {200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
-    const int N_mTBins = 12;
+    double mTBins[] = {150, 200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
+    const int N_mTBins = sizeof(mTBins) / sizeof(mTBins[0]) - 1;
+
+    double mTBinsResp[] = {150, 200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
+    const int N_mTBinsResp = 13;
+
+    TH2D *h_response = new TH2D("h_response", "Response amtrix; GEN m_{T} [GeV]; Reco m_{T} [GeV]", N_mTBinsResp, mTBinsResp, N_mTBinsResp, mTBinsResp);
 
     TH1D *h_acc_den = new TH1D("h_acc_den", "acceptance denominator; m_{T}; Events", N_mTBins, mTBins);
     TH1D *h_acc_num_eff_den = new TH1D("h_acc_num", "acceptance numerator & efficiency denominator; m_{T}; Events", N_mTBins, mTBins);
@@ -97,6 +102,8 @@ void acc_eff_M200(const char* inFile,
             
             if(gen_mT >= 500) continue;
 
+            if(gen_mT < 150.0) continue;
+
             h_acc_den->Fill(gen_mT, w_gen);
             
             if(*GenMET_pt <= 85.0) continue;
@@ -159,7 +166,13 @@ void acc_eff_M200(const char* inFile,
 
                 double w = double(*genWeight) * sf_id * sf_iso * sf_trig * wpu * (*L1PreFiringWeight_Nom);
 
+                double reco_dphi = TVector2::Phi_mpi_pi(Muon_phi[selIdx_reco] - (*MET_phi));
+                double reco_mT = std::sqrt(2.0 * Muon_pt[selIdx_reco] * (*MET_pt) * (1.0 - std::cos(reco_dphi)));
+
+                if(reco_mT < 150.0) continue;
+
                 h_eff_num->Fill(selected_gen_mT, w);
+                h_response->Fill(selected_gen_mT, reco_mT, w);
             }
         }
     }
@@ -169,6 +182,7 @@ void acc_eff_M200(const char* inFile,
     h_acc_den->Write();
     h_acc_num_eff_den->Write();
     h_eff_num->Write();
+    h_response->Write();
 
     fout.Close();
 }

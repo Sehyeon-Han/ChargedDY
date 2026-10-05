@@ -17,7 +17,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
 {
     TH1::SetDefaultSumw2();
 
-    double mTBins[] = {200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
+    double mTBins[] = {150, 200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
     int nmTBins = sizeof(mTBins) / sizeof(double) - 1;
 
     TH1D *h_Muon_pt = new TH1D("h_Muon_pt", "QCD;Muon p_{T} [GeV];Events", 30, 65, 1500);
@@ -204,7 +204,7 @@ void Muon_QCD_2016_preVFP(const char* inFile,
         double dphi = TVector2::Phi_mpi_pi(muonPhi - *MET_phi);
         double mT = std::sqrt(2.0 * muonPt * (*MET_pt) * (1.0 - std::cos(dphi)));
 
-        if(mT <= 200.0) continue;
+        if(mT < 150.0) continue;
 
         ++finalEvents;
 

@@ -22,8 +22,8 @@ void Muon_real_rate(const char* inFile,
     TH1::SetDefaultSumw2();
     gStyle->SetOptStat(0);
 
-    double ptBins[] = {65, 100, 150, 200, 300, 1500};
-    const int N_ptBins = 5;
+    double ptBins[] = {65, 75, 120, 180, 1500};
+    const int N_ptBins = 4;
     
     double etaBins[] = {0.0, 0.9, 1.2, 2.1, 2.4};
     const int N_etaBins = 4;
@@ -112,7 +112,7 @@ void Muon_real_rate(const char* inFile,
             if(fillPt >= 1500.0)
             fillPt = 1499.999;
 
-            bool passLoose = (Muon_highPtId[i] == 2 && Muon_tkRelIso[i] < 0.40);
+            bool passLoose = (Muon_highPtId[i] == 2);
             bool passTight = (Muon_highPtId[i] == 2 && Muon_tkRelIso[i] < 0.10);
 
             if(!passLoose) continue;

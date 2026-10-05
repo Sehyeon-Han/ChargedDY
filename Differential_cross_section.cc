@@ -5,14 +5,17 @@
 #include <TLegend.h>
 #include <TLine.h>
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 void Differential_cross_section()
 {
     gStyle->SetOptStat(0);
 
-    const int N = 12;
-
-    double mTBins[] = {200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
+    double mTBins[] = {150, 200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
+    const int N = sizeof(mTBins) / sizeof(mTBins[0]) - 1;
+    // The 150-200 GeV cross sections have not been supplied.
+    const double missing = std::numeric_limits<double>::quiet_NaN();
 
     double x[N];
 
@@ -21,15 +24,21 @@ void Differential_cross_section()
         x[i] = std::sqrt(mTBins[i] * mTBins[i + 1]);
     }
 
-    double ct18[N] = {0.0338, 0.013977, 0.0066322, 0.0030649, 0.0013568, 0.00061298, 0.00023586, 8.6252e-05, 3.2062e-05, 9.8179e-06, 1.8304e-06, 5.5968e-08};
+    double ct18[N] = {missing, 0.0338, 0.013977, 0.0066322, 0.0030649, 0.0013568, 0.00061298, 0.00023586, 8.6252e-05, 3.2062e-05, 9.8179e-06, 1.8304e-06, 5.5968e-08};
 
-    double result[N] = {0.0514, 0.016536, 0.0072009, 0.0030620, 0.0012422, 0.00047624, 0.00015065, 3.9952e-05, 2.9539e-05, 1.05825e-05, 1.8130e-06, 9.4555e-08};
+    double result[N] = {missing, 0.0514, 0.016536, 0.0072009, 0.0030620, 0.0012422, 0.00047624, 0.00015065, 3.9952e-05, 2.9539e-05, 1.05825e-05, 1.8130e-06, 9.4555e-08};
 
     TH1D* hCT18   = new TH1D("hCT18", "", N, mTBins);
     TH1D* hResult = new TH1D("hResult", "", N, mTBins);
 
     for(int i = 0; i < N; ++i)
     {
+        if(!std::isfinite(ct18[i]) || !std::isfinite(result[i]))
+        {
+            std::cerr << "Missing cross sections for " << mTBins[i]
+                      << "-" << mTBins[i + 1] << " GeV; skipping bin." << std::endl;
+            continue;
+        }
         hCT18->SetBinContent(i + 1, ct18[i]);
         hResult->SetBinContent(i + 1, result[i]);
 
@@ -112,7 +121,7 @@ void Differential_cross_section()
 
     hRatio->Draw("P");
 
-    TLine* line = new TLine(200, 1.0, 5000, 1.0);
+    TLine* line = new TLine(mTBins[0], 1.0, mTBins[N], 1.0);
     line->SetLineStyle(2);
     line->Draw("SAME");
 

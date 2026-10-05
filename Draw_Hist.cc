@@ -13,6 +13,7 @@
 #include <TLatex.h>
 #include <TString.h>
 #include <cmath>
+#include <map>
 
 struct SampleInfo{
     TString fileName;
@@ -106,10 +107,29 @@ void DrawOneVariable(const std::vector<SampleInfo>& samples,
     TH1D* hLegend_ST = nullptr;
     TH1D* hLegend_Tau = nullptr;
 
+    std::map<TString, TH1D*> processHists;
+
     for(size_t i = 0; i < samples.size(); ++i)
     {
         TH1D* h = LoadHist(samples[i], histName, i);
         if(!h) continue;
+
+        if(!samples[i].isData && samples[i].label != "W#rightarrow#mu#nu")
+        {
+            TString label = samples[i].label;
+
+            if(processHists.find(label) == processHists.end())
+            {
+                processHists[label] = (TH1D*)h->Clone(Form("h_%s_%s", label.Data(), histName));
+
+                processHists[label]->SetDirectory(0);
+            }
+            else
+            {
+                processHists[label]->Add(h);
+            }
+        }
+
         fOut->cd();
         h->Write(Form("%s_sample_%zu", histName, i));
 
@@ -161,6 +181,40 @@ void DrawOneVariable(const std::vector<SampleInfo>& samples,
         return;
     }
 
+    if(TString(histName) == "h_mT")
+    {
+        std::cout << "\n=============================================\n";
+        std::cout << " Background yields in each mT bin\n";
+        std::cout << "=============================================\n";
+
+        for(int bin = 1; bin <= hBkgSum->GetNbinsX(); ++bin)
+        {
+            double low  = hBkgSum->GetXaxis()->GetBinLowEdge(bin);
+            double high = hBkgSum->GetXaxis()->GetBinUpEdge(bin);
+
+            std::cout << "\nmT [" << low << ", " << high << "] GeV\n";
+
+            for(const auto& p : processHists)
+            {
+                double yield = p.second->GetBinContent(bin);
+                double error = p.second->GetBinError(bin);
+
+                std::cout
+                    << "  " << p.first
+                    << " = " << yield
+                    << " +/- " << error
+                    << std::endl;
+            }
+
+            std::cout
+                << "  Total background = "
+                << hBkgSum->GetBinContent(bin)
+                << " +/- "
+                << hBkgSum->GetBinError(bin)
+                << std::endl;
+        }
+    }
+
     TH1D* hSignalData = (TH1D*)hData->Clone(Form("%s_DataMinusBkg", histName));
     hSignalData->SetDirectory(0);
     hSignalData->Add(hBkgSum, -1.0);
@@ -186,7 +240,7 @@ void DrawOneVariable(const std::vector<SampleInfo>& samples,
 
     if(useLogy)
     {
-        stack->SetMinimum(1e-3);
+        stack->SetMinimum(0.5);
         stack->SetMaximum(10.0 * ymax);
     }
     else
@@ -536,7 +590,7 @@ void Draw_Hist(const double xsec200 = 8.78288653e00,
         {"Muon_ST_tW_antitop_5f_inclusiveDecays_2016_preVFP.root", "single top", kBlue, kST_tW_antitop_5f_inclusiveDecays, false},
         {"Muon_ST_tW_top_5f_inclusiveDecays_2016_preVFP.root", "single top", kBlue, kST_tW_top_5f_inclusiveDecays, false},
 
-        {"Muon_QCD_2016_preVFP.root", "QCD", kMagenta, 1.0, false},
+        {"Muon_QCD_BDT_2016_preVFP.root", "QCD", kMagenta, 1.0, false},
 
         {"Muon_WWTo1L1Nu2Q_2016_preVFP.root", "Diboson", kOrange, kWWTo1L1Nu2Q, false},
         {"Muon_WWTo2L2Nu_2016_preVFP.root", "Diboson", kOrange, kWWTo2L2Nu, false},
@@ -562,10 +616,10 @@ void Draw_Hist(const double xsec200 = 8.78288653e00,
 
     DrawOneVariable(samples, "h_mT", "m_{T}", "m_{T} [GeV]", "Data_MC_2016_preVFP_mT.png", true, true, true, fOut);
     DrawOneVariable(samples, "h_Muon_pt", "Muon p_{T}", "p_{T} [GeV]", "Data_MC_2016_preVFP_pt.png", true, true, true, fOut);
-    DrawOneVariable(samples, "h_Muon_eta", "Muon #eta", "#eta", "Data_MC_2016_preVFP_eta.png", false, false, false, fOut);
-    DrawOneVariable(samples, "h_Muon_phi", "Muon #phi", "#phi", "Data_MC_2016_preVFP_phi.png", false, false, false, fOut);
+    DrawOneVariable(samples, "h_Muon_eta", "Muon #eta", "#eta", "Data_MC_2016_preVFP_eta.png", false, true, false, fOut);
+    DrawOneVariable(samples, "h_Muon_phi", "Muon #phi", "#phi", "Data_MC_2016_preVFP_phi.png", false, true, false, fOut);
     DrawOneVariable(samples, "h_MET_pt", "MET p_{T}", "MET p_{T}", "Data_MC_2016_preVFP_MET_pt.png", true, true, true, fOut);
-    DrawOneVariable(samples, "h_MET_phi", "MET #phi", "#phi", "Data_MC_2016_preVFP_MET_phi.png", false, false, false, fOut);
+    DrawOneVariable(samples, "h_MET_phi", "MET #phi", "#phi", "Data_MC_2016_preVFP_MET_phi.png", false, true, false, fOut);
 
     fOut->Close();
 }

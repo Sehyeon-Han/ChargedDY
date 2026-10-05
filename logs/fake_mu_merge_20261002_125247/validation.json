@@ -1,0 +1,12 @@
+{
+  "validated_outputs": 23,
+  "validated_inputs": 648,
+  "histograms_per_output": 14,
+  "checks": [
+    "ROOT integrity",
+    "all bin contents including underflow/overflow",
+    "all bin errors",
+    "entries"
+  ],
+  "sources_deleted": false
+}

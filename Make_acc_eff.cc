@@ -7,22 +7,24 @@
 #include <TLegend.h>
 #include <TStyle.h>
 #include <TPad.h>
+#include <TH2D.h>
 
 void Make_acc_eff()
 {
     TH1::SetDefaultSumw2();
     gStyle->SetOptStat(0);
 
-    const int N = 4;
+    const int N = 5;
 
-    const char* files[N] = {"acc_eff_M200.root", "acc_eff_M500.root", "acc_eff_M1000.root", "acc_eff_M2000.root"};
-    double xsec[N] = {8.78288653e00, 2.76542446e-01, 1.58702653e-02, 4.15066636e-04};
-    double sumW[N] = {3250000, 750000, 250000, 50000};
+    const char* files[N] = {"acc_eff_M100.root", "acc_eff_M200.root", "acc_eff_M500.root", "acc_eff_M1000.root", "acc_eff_M2000.root"};
+    double xsec[N] = {2.19743252e02, 8.78288653e00, 2.76542446e-01, 1.58702653e-02, 4.15066636e-04};
+    double sumW[N] = {944000, 3250000, 750000, 250000, 50000};
     const double lumi = 19520.0;
 
     TH1D* h_acc_den_comb = nullptr;
     TH1D* h_acc_num_comb = nullptr;
     TH1D* h_eff_num_comb = nullptr;
+    TH2D* h_response_comb = nullptr;
 
     for(int i = 0; i < N; ++i)
     {
@@ -37,6 +39,7 @@ void Make_acc_eff()
         TH1D* h_acc_den = (TH1D*)f->Get("h_acc_den");
         TH1D* h_acc_num = (TH1D*)f->Get("h_acc_num");
         TH1D* h_eff_num = (TH1D*)f->Get("h_eff_num");
+        TH2D* h_response = (TH2D*)f->Get("h_response");
 
         double norm = xsec[i] * lumi / sumW[i];
 
@@ -47,10 +50,24 @@ void Make_acc_eff()
         h_den_tmp->SetDirectory(nullptr);
         h_acc_tmp->SetDirectory(nullptr);
         h_eff_tmp->SetDirectory(nullptr);
+        
+        TH2D* h_resp_tmp = nullptr;
+
+        if(h_response)
+        {
+            h_resp_tmp =
+                (TH2D*)h_response->Clone(
+                    Form("h_response_%d", i)
+                );
+
+            h_resp_tmp->SetDirectory(nullptr);
+        }
 
         h_den_tmp->Scale(norm);
         h_acc_tmp->Scale(norm);
         h_eff_tmp->Scale(norm);
+
+        if(h_resp_tmp) h_resp_tmp->Scale(norm);
 
         if(!h_acc_den_comb)
         {
@@ -69,9 +86,24 @@ void Make_acc_eff()
             h_eff_num_comb->Add(h_eff_tmp);
         }
 
+        if(h_resp_tmp)
+        {
+            if(!h_response_comb)
+            {
+                h_response_comb = (TH2D*)h_resp_tmp->Clone("h_response_combined");
+                h_response_comb->SetDirectory(nullptr);
+            }
+            else
+            {
+                h_response_comb->Add(h_resp_tmp);
+            }
+        }
+
         delete h_den_tmp;
         delete h_acc_tmp;
         delete h_eff_tmp;
+
+        if(h_resp_tmp) delete h_resp_tmp;
 
         f->Close();
         delete f;
@@ -126,11 +158,45 @@ void Make_acc_eff()
             << std::endl;
     }
 
+    TH2D* h_response_norm = nullptr;
+
+    if(h_response_comb)
+    {
+        h_response_norm = (TH2D*)h_response_comb->Clone("h_response_normalized");
+        h_response_norm->SetDirectory(nullptr);
+
+        for(int ix = 1; ix <= h_response_norm->GetNbinsX(); ++ix)
+        {
+            double sum = 0.0;
+
+            for(int iy = 1; iy <= h_response_norm->GetNbinsY(); ++iy)
+            {
+                sum += h_response_norm->GetBinContent(ix, iy);
+            }
+
+            if(sum == 0.0)
+                continue;
+
+            for(int iy = 1; iy <= h_response_norm->GetNbinsY(); ++iy)
+            {
+                double value = h_response_norm->GetBinContent(ix, iy);
+
+                double error = h_response_norm->GetBinError(ix, iy);
+
+                h_response_norm->SetBinContent(ix, iy, value / sum);
+
+                h_response_norm->SetBinError(ix, iy, error / sum);
+            }
+        }
+    }
+
     TFile fout("acceptance_efficiency.root", "RECREATE");
 
     h_acc_den_comb->Write();
     h_acc_num_comb->Write();
     h_eff_num_comb->Write();
+    h_response_comb->Write();
+    h_response_norm->Write();
 
     h_acc->Write();
     h_eff->Write();

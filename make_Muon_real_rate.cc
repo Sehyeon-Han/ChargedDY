@@ -47,7 +47,7 @@ void make_Muon_real_rate(const char* inFile = "real_mu_merged.root",
 
     TCanvas *c = new TCanvas("c", "Muon real rate", 900, 800);
 
-    h_real_rate->SetMinimum(0.97);
+    h_real_rate->SetMinimum(0.94);
     h_real_rate->SetMaximum(1.0);
     h_real_rate->Draw("COLZ TEXT");
 

@@ -18,7 +18,7 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
 {
     TH1::SetDefaultSumw2();
 
-    TH1D *h_Muon_pt_CR = new TH1D("h_Muon_pt", "QCD;Muon p_{T} [GeV];Events", 30, 65, 1500);
+    TH1D *h_Muon_pt_CR = new TH1D("h_Muon_pt", "QCD;Muon p_{T} [GeV];Events", 200, 65, 1500);
     TH1D *h_Muon_eta_CR = new TH1D("h_Muon_eta", "QCD;Muon #eta;Events", 50, -3, 3);
     TH1D *h_Muon_phi_CR = new TH1D("h_Muon_phi", "QCD;Muon #phi;Events", 50, -3.5, 3.5);
     TH1D *h_MET_pt_CR = new TH1D("h_MET_pt", "QCD;MET p_{T} [GeV];Events", 65, 0, 65);
@@ -30,7 +30,7 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
     TH2D *h_real_rate = dynamic_cast<TH2D*>(fReal->Get("h_real_rate"));
     TH2D *h_fake_rate = dynamic_cast<TH2D*>(fFake->Get("h_fake_rate"));
 
-    auto GetRealRate = [](TH2D *hist, double pt, double absEta)
+    auto GetRealRate = [](TH2D *hist, double absEta, double pt)
     {
         double etaValue = std::clamp(
             absEta,
@@ -50,23 +50,23 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
         int ptBin =
             hist->GetYaxis()->FindFixBin(ptValue);
 
-        return hist->GetBinContent(ptBin, etaBin);
+        return hist->GetBinContent(etaBin, ptBin);
     };
 
-    auto GetFakeRate = [](TH2D *hist, double pt, double absEta)
+    auto GetFakeRate = [](TH2D *hist, double absEta, double pt)
     {
-        double ptValue = std::clamp(pt,
+        double etaValue = std::clamp(absEta,
                                      hist->GetXaxis()->GetXmin() + 1.0e-6,
                                      hist->GetXaxis()->GetXmax() - 1.0e-6);
 
-        double etaValue = std::clamp(absEta,
+        double ptValue = std::clamp(pt,
                                     hist->GetYaxis()->GetXmin() + 1.0e-6,
                                     hist->GetYaxis()->GetXmax() - 1.0e-6);
 
-        int ptBin = hist->GetXaxis()->FindFixBin(ptValue);
-        int etaBin = hist->GetYaxis()->FindFixBin(etaValue);
+        int etaBin = hist->GetXaxis()->FindFixBin(etaValue);
+        int ptBin = hist->GetYaxis()->FindFixBin(ptValue);
 
-        return hist->GetBinContent(ptBin, etaBin);
+        return hist->GetBinContent(etaBin, ptBin);
     };
 
     TChain chain("Events");
@@ -145,7 +145,7 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
 
         double dphiMuonMET = std::fabs(TVector2::Phi_mpi_pi(phi - *MET_phi));
 
-        if(dphiMuonMET >= M_PI / 6.0) continue;
+        //if(dphiMuonMET >= M_PI / 6.0) continue;
         if(Muon_dxyErr[i] <= 0.0) continue;
 
         double d0Significance = std::fabs(Muon_dxy[i]) / Muon_dxyErr[i];
@@ -181,8 +181,8 @@ void Muon_QCD_CR_2016_preVFP(const char* inFile,
 
         if(!passTight && !passLooseNotTight) continue;
 
-        double epsilonR = GetRealRate(h_real_rate, muonPt, std::fabs(muonEta));
-        double epsilonF = GetFakeRate(h_fake_rate, muonPt, std::fabs(muonEta));
+        double epsilonR = GetRealRate(h_real_rate, std::fabs(muonEta), muonPt);
+        double epsilonF = GetFakeRate(h_fake_rate, std::fabs(muonEta), muonPt);
 
         double denominator = epsilonR - epsilonF;
 

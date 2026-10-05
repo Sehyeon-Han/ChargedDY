@@ -28,14 +28,14 @@ void Muon_fake_rate_DYMC_500(const char* inFile = "/pnfs/knu.ac.kr/data/cms/stor
     TH2D *h_fake_den = new TH2D("h_fake_den", "Fake-rate denominator; |#eta|; p_{T} [GeV]", N_etaBins, etaBins, N_ptBins, ptBins);
     TH2D *h_fake_num = new TH2D("h_fake_num", "Fake-rate numerator; |#eta|; p_{T} [GeV]", N_etaBins, etaBins, N_ptBins, ptBins);
 
-    TH1D *h_Muon_pt_den = new TH1D("h_Muon_pt_den", "Muon p_{T}; p_{T} [GeV]; Events", 30, 65, 1500);
+    TH1D *h_Muon_pt_den = new TH1D("h_Muon_pt_den", "Muon p_{T}; p_{T} [GeV]; Events", 200, 65, 1500);
     TH1D *h_Muon_eta_den = new TH1D("h_Muon_eta_den", "Muon #eta; #eta; Events", 50, -3, 3);
     TH1D *h_MET_pt_den = new TH1D("h_MET_pt_den", "MET p_{T}; MET p_{T} [GeV]; Events", 65, 0, 65);
     TH1D *h_Muon_phi_den = new TH1D("h_Muon_phi_den", "Muon #phi; #phi; Events", 50, -3.5, 3.5);
     TH1D *h_MET_phi_den = new TH1D("h_MET_phi_den", "MET #phi; MET #phi; Events", 50, -3.5, 3.5);
     TH1D *h_Muon_tkRelIso_den = new TH1D("h_Muon_tkRelIso_den", "Muon tkRelIso; iso; Events", 30, 0, 0.45);
 
-    TH1D *h_Muon_pt_num = new TH1D("h_Muon_pt_num", "Muon p_{T}; p_{T} [GeV]; Events", 30, 65, 1500);
+    TH1D *h_Muon_pt_num = new TH1D("h_Muon_pt_num", "Muon p_{T}; p_{T} [GeV]; Events", 200, 65, 1500);
     TH1D *h_Muon_eta_num = new TH1D("h_Muon_eta_num", "Muon #eta; #eta; Events", 50, -3, 3);
     TH1D *h_MET_pt_num = new TH1D("h_MET_pt_num", "MET p_{T}; MET p_{T} [GeV]; Events", 65, 0, 65);
     TH1D *h_Muon_phi_num = new TH1D("h_Muon_phi_num", "Muon #phi; #phi; Events", 50, -3.5, 3.5);
@@ -151,7 +151,7 @@ void Muon_fake_rate_DYMC_500(const char* inFile = "/pnfs/knu.ac.kr/data/cms/stor
 
         double dphiMuonMET = std::fabs(TVector2::Phi_mpi_pi(phi - *MET_phi));
 
-        if(dphiMuonMET >= M_PI / 6.0) continue;
+        //if(dphiMuonMET >= M_PI / 6.0) continue;
         if(Muon_dxyErr[i] <= 0.0) continue;
 
         double d0Significance = std::fabs(Muon_dxy[i]) / Muon_dxyErr[i];

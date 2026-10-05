@@ -19,7 +19,9 @@ void Muon_MC_2000_2016_postVFP(const char* inFile,
     TH1D *h_Muon_phi = new TH1D("h_Muon_phi", "Muon #phi; #phi; Events", 50, -3.3, 3.3);
     TH1D *h_MET_pt = new TH1D("h_MET_pt", "MET p_{T}; MET p_{T} [GeV]; Events", 30, 85, 3500);
     TH1D *h_MET_phi = new TH1D("h_MET_phi", "MET #phi; #phi; Events", 50, -3.3, 3.3);
-    TH1D *h_mT = new TH1D("h_mT", "m_{T}; m_{T} [GeV]; Events", 30, 200, 3500);
+    double mTBins[] = {150, 200, 250, 300, 350, 425, 500, 600, 750, 900, 1100, 1400, 2000, 5000};
+    const int nmTBins = sizeof(mTBins) / sizeof(mTBins[0]) - 1;
+    TH1D *h_mT = new TH1D("h_mT", "m_{T}; m_{T} [GeV]; Events", nmTBins, mTBins);
 
     TChain chain("Events");
     chain.Add(inFile);
