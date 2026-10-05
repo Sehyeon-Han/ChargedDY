@@ -1,0 +1,1 @@
+Deleted all 648 original input files listed in manifest.json. All 23 merged output files preserved.

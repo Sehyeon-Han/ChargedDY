@@ -1,0 +1,2 @@
+PASS: 648 inputs merged into 23 exact output filenames with hadd -f.
+All histogram bin contents (including underflow/overflow) and entries match input sums.
